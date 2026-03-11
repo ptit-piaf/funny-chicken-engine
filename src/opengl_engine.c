@@ -13,13 +13,18 @@ E_main fn_openglEngineLoop()
 
         GLFWwindow* window = fn_createOpenglWindow();
 
-        glfwSetWindowUserPointer(window, NULL);
+        S_event event = {0};
+        glfwSetWindowUserPointer(window, event);
+
+        // TODO : improve set glfw callback system
 
         bool running = true;
         while(running)
         {
-
+                if(event.type & EVENT_QUIT)
+                        running = false;
         }
 
+        glfwDestroyWindow(window);
         return returnValue;
 }
