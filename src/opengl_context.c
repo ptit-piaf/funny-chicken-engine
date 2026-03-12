@@ -1,4 +1,4 @@
-#include <GL/glad.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
@@ -12,7 +12,7 @@ GLFWwindow* fn_createOpenglWindow()     // TODO : implement config file and argu
 
         GLFWwindow* window = glfwCreateWindow(800, 500, "funny chiken engine", NULL, NULL);
 
-        glfwSetWindowCloseCallback(window, )
+        glfwSetWindowCloseCallback(window, );
 
         return window;
 }

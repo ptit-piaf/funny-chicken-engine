@@ -12,4 +12,6 @@ typedef struct
         E_eventType type;
 } S_event;
 
+void fn_windowCloseCallback(GLFWwindow* window);
+
 #endif

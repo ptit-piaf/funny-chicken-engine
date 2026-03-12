@@ -1,4 +1,4 @@
-#include <GL/glad.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
@@ -6,6 +6,7 @@
 
 #include "engine.h"
 #include "fn_state.h"
+#include "event.h"
 
 E_main fn_openglEngineLoop()
 {
@@ -14,9 +15,7 @@ E_main fn_openglEngineLoop()
         GLFWwindow* window = fn_createOpenglWindow();
 
         S_event event = {0};
-        glfwSetWindowUserPointer(window, event);
-
-        // TODO : improve set glfw callback system
+        glfwSetWindowUserPointer(window, &event);
 
         bool running = true;
         while(running)
