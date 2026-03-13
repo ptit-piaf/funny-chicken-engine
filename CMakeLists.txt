@@ -10,6 +10,7 @@ set(SOURCE src/main.c
         src/opengl_engine.c
         src/opengl_context.c
         src/global_variable.c
+        src/window_event.c
 )
 
 set(BIN funny)

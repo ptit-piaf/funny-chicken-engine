@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "engine.h"
+#include "event.h"
 
 GLFWwindow* fn_createOpenglWindow()     // TODO : implement config file and argument to change window Hint
 {
@@ -12,7 +13,7 @@ GLFWwindow* fn_createOpenglWindow()     // TODO : implement config file and argu
 
         GLFWwindow* window = glfwCreateWindow(800, 500, "funny chiken engine", NULL, NULL);
 
-        glfwSetWindowCloseCallback(window, );
+        glfwSetWindowCloseCallback(window, fn_windowCloseCallback);
 
         return window;
 }
