@@ -11,9 +11,9 @@
 #include "engine.h"
 #include "global_variable.h"
 
-int main(int argc, char** v_argv)
+u32 main(u32 argc, char** v_argv)
 {
-        int returnValue = 0;
+        u32 returnValue = 0;
 
         fn_manageMainArg();
 

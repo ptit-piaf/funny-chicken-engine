@@ -4,3 +4,5 @@
 !include/*.h
 !CMakeLists.txt
 !.gitignore
+!*.vert
+!*.frag
