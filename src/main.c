@@ -11,7 +11,7 @@
 #include "engine.h"
 #include "global_variable.h"
 
-u32 main(u32 argc, char** v_argv)
+i32 main(i32 argc, char** v_argv)
 {
         u32 returnValue = 0;
 

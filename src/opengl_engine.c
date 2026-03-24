@@ -18,27 +18,35 @@ E_main fn_openglEngineLoop()
         if(!window)
                 goto GO_END;
 
-        gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        i32 version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        if(version == 0)
+        {
+                fprintf(stderr, "glad failed to load\n");
+                return HOL_CREATION_FAILED;
+        }
+
+        printf("version = %d/%x\n", version, version);
 
         S_event event = {0};
         glfwSetWindowUserPointer(window, &event);
+        glViewport(0, 0, 800, 500);
 
         vec3 vertices [] =
                 {
-                        {-1.0f, 0.0f, -1.0f},
-                        {1.0f, 0.0f, -1.0f},
-                        {0.0f, 0.0f, 1.0f}
+                        {-1.0f, -1.0f, 0.0},
+                        {1.0f, -1.0f, 0.0},
+                        {0.0f, 1.0f, 0.0}
                 };
 
         GLuint vao, vbo;
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*9, vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
         glEnableVertexAttribArray(0);
 
         GLuint vertexShader, fragmentShader;
