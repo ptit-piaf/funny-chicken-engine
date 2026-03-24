@@ -1,6 +1,9 @@
 #define HOL_IMPLEMENTATION
 #include <HOL/HOL.h>
 
+#define CGLTF_IMPLEMENTATION
+#include <cgltf/cgltf.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 

@@ -16,6 +16,7 @@ GLFWwindow* fn_createOpenglWindow()     // TODO : implement config file and argu
         glfwMakeContextCurrent(window);
 
         glfwSetWindowCloseCallback(window, fn_windowCloseCallback);
+        glfwSetWindowSizeCallback(window, fn_windowSizeCallback);
 
         return window;
 }

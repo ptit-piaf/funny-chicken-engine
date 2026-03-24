@@ -10,8 +10,12 @@ typedef enum
 typedef struct
 {
         E_eventType type;
+        u32 windowWidth;
+        u32 windowHeight;
+        bool opengl;
 } S_event;
 
 void fn_windowCloseCallback(GLFWwindow* window);
+void fn_windowSizeCallback(GLFWwindow* window, int width, int height);
 
 #endif

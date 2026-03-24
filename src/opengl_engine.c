@@ -17,6 +17,9 @@ E_main fn_openglEngineLoop()
         GLFWwindow* window = fn_createOpenglWindow();
         if(!window)
                 goto GO_END;
+        S_event event = {0};
+        glfwSetWindowUserPointer(window, &event);
+        glfwGetWindowSize(window, &event.windowWidth, &event.windowHeight);
 
         i32 version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
         if(version == 0)
@@ -24,12 +27,9 @@ E_main fn_openglEngineLoop()
                 fprintf(stderr, "glad failed to load\n");
                 return HOL_CREATION_FAILED;
         }
+        event.opengl = true;
 
-        printf("version = %d/%x\n", version, version);
-
-        S_event event = {0};
-        glfwSetWindowUserPointer(window, &event);
-        glViewport(0, 0, 800, 500);
+        glViewport(0, 0, event.windowWidth, event.windowHeight);
 
         vec3 vertices [] =
                 {
