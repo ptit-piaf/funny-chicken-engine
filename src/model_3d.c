@@ -26,6 +26,16 @@ S_model fn_loadGltfFileFormat(const char* filePath)
                 return model
         }
 
+        model.vao = malloc(sizeof(*model.vao) * data->mesh->primitives_count);
+        model.vbo = malloc(sizeof(*model.vbo) * data->mesh->primitives_count);
+        model.ebo = malloc(sizeof(*model.ebo) * data->mesh->primitives_count);
+
+        cgltf_primitive* primitive = data->mesh->primitives;
+
+        for(u32 i=0; i<data->mesh->primitives_count; i++)
+        {
+                primitive[i].indices
+        }
         data->mesh->primitives
 
         cgltf_free(fileData);

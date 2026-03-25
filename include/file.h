@@ -6,8 +6,9 @@
 
 typedef struct  // TODO : See in the future is This struct should be in an other header
 {
-        GLuint* vbo;
-        GLuint* vao;
+        GLuint* v_vbo;
+        GLuint* v_vao;
+        GLuint* v_ebo;
 
         u32 primitiveCount;
 
