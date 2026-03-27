@@ -27,19 +27,44 @@ S_model fn_loadGltfFileFormat(const char* filePath)
         }
         cgltf_load_buffers(&option, fileData, filePath);
 
-        model.vao = malloc(sizeof(*model.vao) * fileData->mesh->primitives_count);
-        model.vbo = malloc(sizeof(*model.vbo) * fileData->mesh->primitives_count);
-        model.ebo = malloc(sizeof(*model.ebo) * fileData->mesh->primitives_count);
+        model.v_vao = malloc(sizeof(*model.vao) * fileData->mesh->primitives_count);
+        model.v_vbo = malloc(sizeof(*model.vbo) * fileData->mesh->primitives_count);
+        model.v_ebo = malloc(sizeof(*model.ebo) * fileData->mesh->primitives_count);
+
+        model.primitiveCount = fileData->mesh->primitives_count;
+        glGenVertexArrays(model.primitiveCount, model.v_vao);
+        glGenBuffers(model.primitiveCount, model.v_vbo);
+        glGenBuffers(model.primitiveCount, model.v_ebo);
 
         cgltf_primitive* primitive = fileData->mesh->primitives;
 
         for(u32 i=0; i<fileData->mesh->primitives_count; i++)
         {
                 primitive[i].indices;
-                for(u32 i=0; i<primitive[i].attributes_count; i++)
+
+                vec4* vboBuffer = malloc(sizeof(vec4) * primitive[i].attributes_count);
+
+                cgltf_attribute positionAttribute = {0};
+
+                for(u32 j=0; j<primitive[i].attributes_count; j++)
                 {
-                        primitive[i].attributes
+                        switch(primitive[i].attributes[j].type)
+                        {
+                                case cgltf_attribute_type_position:
+                                        positionAttribute = primitive[i].attributes[j];
+                                        break;
+                        }
                 }
+
+                for(u32 j=0; j<positionAttribute.data->count; j++)
+                {
+                        cgltf_accessor_read_float(positionAttribute, j, vboBuffer[j], 3);
+                        vboBuffer[j][3] = 1.0f;
+                }
+
+                // INFO : GPU allocation
+
+                
         }
         fileData->mesh->primitives
 
