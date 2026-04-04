@@ -24,4 +24,6 @@ void fn_windowSizeCallback(GLFWwindow* window, int width, int height)
 
         p_event->windowWidth = width;
         p_event->windowHeight = height;
+
+        p_event->type |= EVENT_WINDOW_SIZE;
 }

@@ -17,6 +17,7 @@ GLFWwindow* fn_createOpenglWindow()     // TODO : implement config file and argu
 
         glfwSetWindowCloseCallback(window, fn_windowCloseCallback);
         glfwSetWindowSizeCallback(window, fn_windowSizeCallback);
+        glfwSetCursorPosCallback(window, fn_scene3DCursorPosCallback);  // TODO : to change when UI is implemented
 
         return window;
 }

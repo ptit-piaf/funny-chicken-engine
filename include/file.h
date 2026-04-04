@@ -11,8 +11,10 @@ typedef struct  // TODO : See in the future is This struct should be in an other
         GLuint* v_ebo;
 
         u32 primitiveCount;
+        u32* v_verticeCount;
+        u32* v_indiceCount;
 
-        E_enum error;
+        E_error error;
 } S_model;  // INFO : I considere a model as only one mesh with multiple primitive
 
 S_model fn_loadGltfFileFormat(const char* filePath);

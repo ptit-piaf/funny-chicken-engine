@@ -9,6 +9,7 @@
 #include "fn_state.h"
 #include "event.h"
 #include "shader.h"
+#include "file.h"
 
 E_main fn_openglEngineLoop()
 {
@@ -29,6 +30,9 @@ E_main fn_openglEngineLoop()
         }
         event.opengl = true;
 
+        fprintf(stderr, ANSI_RED_TEXT("Start gltf parsing\n"));
+        S_model model = fn_loadGltfFileFormat("cube.gltf");
+
         glViewport(0, 0, event.windowWidth, event.windowHeight);
 
         vec3 vertices [] =
@@ -37,6 +41,11 @@ E_main fn_openglEngineLoop()
                         {1.0f, -1.0f, 0.0},
                         {0.0f, 1.0f, 0.0}
                 };
+
+        mat4 projectionMatrix = {0};
+        glm_perspective(90.0f, 800.0f/500.0f, 0.01f, 100.0f, projectionMatrix);
+
+        mat4 viewMatrix = {0};
 
         GLuint vao, vbo;
         glGenBuffers(1, &vbo);
@@ -50,8 +59,8 @@ E_main fn_openglEngineLoop()
         glEnableVertexAttribArray(0);
 
         GLuint vertexShader, fragmentShader;
-        vertexShader = fn_compileOpenglShader("test.vert", GL_VERTEX_SHADER);
-        fragmentShader = fn_compileOpenglShader("test.frag", GL_FRAGMENT_SHADER);
+        vertexShader = fn_compileOpenglShader("test2.vert", GL_VERTEX_SHADER);
+        fragmentShader = fn_compileOpenglShader("test2.frag", GL_FRAGMENT_SHADER);
 
         GLuint shaderProgram = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
@@ -65,7 +74,7 @@ E_main fn_openglEngineLoop()
                 glClear(GL_COLOR_BUFFER_BIT);
 
                 glUseProgram(shaderProgram);
-                glBindVertexArray(vao);
+                glBindVertexArray(model.v_vao[0]);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
 
                 glfwSwapBuffers(window);

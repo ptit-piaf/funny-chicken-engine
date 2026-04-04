@@ -12,6 +12,7 @@ set(SOURCE src/main.c
         src/global_variable.c
         src/window_event.c
         src/opengl_shader.c
+        src/model_3d.c
 )
 
 set(BIN funny)
