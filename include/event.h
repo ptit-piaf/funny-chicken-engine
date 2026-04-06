@@ -18,15 +18,12 @@ typedef struct
         u32 windowWidth;
         u32 windowHeight;
 
-        mat4 viewMatrix;
-        float xCameraAxis;
-        float yCameraAxis;
-        vec3 position;
-
-        bool opengl;
+        double xMouseMov;
+        double yMouseMov;
 } S_event;
 
 void fn_windowCloseCallback(GLFWwindow* window);
-void fn_windowSizeCallback(GLFWwindow* window, int width, int height);
+void fn_openGLWindowSizeCallback(GLFWwindow* window, int width, int height);
+void fn_scene3DCursorPosCallback(GLFWwindow* window, double x, double y);
 
 #endif

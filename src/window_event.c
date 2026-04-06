@@ -14,13 +14,12 @@ void fn_windowCloseCallback(GLFWwindow* window)
         p_event->type |= EVENT_QUIT;
 }
 
-void fn_windowSizeCallback(GLFWwindow* window, int width, int height)
+void fn_openGLWindowSizeCallback(GLFWwindow* window, int width, int height)
 {
         S_event* p_event = glfwGetWindowUserPointer(window);
         fprintf(stdout, ANSI_BLUE_TEXT("GLFW event") " : Window size[%d, %d] event called\n", width, height);
 
-        if(p_event->opengl)
-                glViewport(0, 0, width, height);
+        glViewport(0, 0, width, height);
 
         p_event->windowWidth = width;
         p_event->windowHeight = height;
