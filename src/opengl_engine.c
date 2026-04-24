@@ -61,24 +61,46 @@ E_main fn_openglEngineLoop()
 
         GLuint shaderProgram = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
-        GLuint matrixLocation = glGetUniformLocation(shaderProgram, "matrix");
+        glDepthRange(-100.0f, 100.0f);
+
+        GLuint matrixLocation = glGetUniformLocation(shaderProgram, "modelMat");
         mat4 var = GLM_MAT4_IDENTITY_INIT;
-        var[0][4] = -100.0f;
+
+        mat4 var2 = GLM_MAT4_IDENTITY_INIT;
+        printf("event aspect = %f\n", event.windowWidth/event.windowHeight);
+        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, var2);
+        for(int i=0; i<4; i++)
+        {
+                printf("|[");
+                REPEAT(printf("%f, ", var2[i][_]), 3);
+                printf("]\n");
+                printf("|\n");
+        }
+
         glfwSwapInterval(1);
 
         glClearColor(0.0, 1.0, 0.0, 0.0);
         bool running = true;
         while(running)
         {
-                var[0][4] += 1.0f;
+                if(glfwGetKey(window, GLFW_KEY_D))
+                        var[3][0] += 0.01f;
+                if(glfwGetKey(window, GLFW_KEY_A))
+                        var[3][0] -= 0.01f;
+                if(glfwGetKey(window, GLFW_KEY_S))
+                        var[3][2] -= 0.01f;
+                if(glfwGetKey(window, GLFW_KEY_W))
+                        var[3][2] += 0.01f;
 
                 if(event.type & EVENT_QUIT)
                 {
                         running = false;
                 }
 
-                glClear(GL_COLOR_BUFFER_BIT);
+                glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, var2);
 
+                glClear(GL_COLOR_BUFFER_BIT);
+                glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionViewMat"), 1, GL_FALSE, *var2);
                 glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *var);
 
                 glUseProgram(shaderProgram);
