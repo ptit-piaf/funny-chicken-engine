@@ -15,6 +15,7 @@ set(SOURCE src/main.c
         src/model_3d.c
         src/mouse_event.c
         src/opengl_error.c
+        src/mat.c
 )
 
 set(BIN funny)

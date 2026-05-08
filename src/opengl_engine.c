@@ -12,6 +12,7 @@
 #include "shader.h"
 #include "file.h"
 #include "error.h"
+#include "math3d.h"
 
 E_main fn_openglEngineLoop()
 {
@@ -37,6 +38,13 @@ E_main fn_openglEngineLoop()
 
         glViewport(0, 0, event.windowWidth, event.windowHeight);
 
+        mat4 projectionMat = GLM_MAT4_IDENTITY_INIT;
+        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, projectionMat);
+
+        mat4 viewMat = GLM_MAT4_IDENTITY_INIT;
+
+        // INFO : temporary code
+
         vec3 vertices [] =
                 {
                         {-1.0f, -1.0f, 0.0},
@@ -61,28 +69,23 @@ E_main fn_openglEngineLoop()
 
         GLuint shaderProgram = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
-        glDepthRange(-100.0f, 100.0f);
-
         GLuint matrixLocation = glGetUniformLocation(shaderProgram, "modelMat");
         mat4 var = GLM_MAT4_IDENTITY_INIT;
 
-        mat4 var2 = GLM_MAT4_IDENTITY_INIT;
-        printf("event aspect = %f\n", event.windowWidth/event.windowHeight);
-        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, var2);
-        for(int i=0; i<4; i++)
-        {
-                printf("|[");
-                REPEAT(printf("%f, ", var2[i][_]), 3);
-                printf("]\n");
-                printf("|\n");
-        }
-
         glfwSwapInterval(1);
 
+        float xRotation = 0.0f;
+        float yRotation = 0.0f;
+
+        vec3 // 
+
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         glClearColor(0.0, 1.0, 0.0, 0.0);
         bool running = true;
         while(running)
         {
+                printf(ANSI_YELLOW_TEXT("start of while loop\n"));
+
                 if(glfwGetKey(window, GLFW_KEY_D))
                         var[3][0] += 0.01f;
                 if(glfwGetKey(window, GLFW_KEY_A))
@@ -92,15 +95,31 @@ E_main fn_openglEngineLoop()
                 if(glfwGetKey(window, GLFW_KEY_W))
                         var[3][2] += 0.01f;
 
+                // INFO : event handling
                 if(event.type & EVENT_QUIT)
                 {
                         running = false;
                 }
+                if(event.type & EVENT_WINDOW_SIZE)
+                {
+                        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, projectionMat);
+                        glViewport(0, 0, event.windowWidth, event.windowHeight);
+                }
+                if(event.type & EVENT_MOUSE_POS)
+                {
+                        fn_updateViewMat((vec3){0.0f,0.0f,0.0f}, (vec3){0.0f,1.0f,0.0f}, xRotation+event.xMouseMov*0.01f,yRotation+event.yMouseMov*0.01f , viewMat);
+                        xRotation += event.xMouseMov*0.01f;
+                        yRotation += event.yMouseMov*0.01f;
+                        event.xMouseMov = 0;
+                        event.yMouseMov = 0;
+                }
 
-                glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, var2);
+                // INFO : Rendering
+                mat4 projectionViewMat;
+                glm_mat4_mul(projectionMat, viewMat, projectionViewMat);
 
                 glClear(GL_COLOR_BUFFER_BIT);
-                glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionViewMat"), 1, GL_FALSE, *var2);
+                glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionViewMat"), 1, GL_FALSE, *projectionViewMat);
                 glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *var);
 
                 glUseProgram(shaderProgram);
@@ -108,6 +127,7 @@ E_main fn_openglEngineLoop()
                 glDrawArrays(GL_TRIANGLES, 0, 3);
 
                 glfwSwapBuffers(window);
+
                 glfwPollEvents();
 
         }
