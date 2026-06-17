@@ -13,7 +13,7 @@ void fn_updateViewMat(vec3 position, vec3 up, float xRotation, float yRotation, 
                         sin(yRotation),
                         sin(xRotation) * cos(yRotation),
                 };
-        glm_lookat(position, center, up, dest);
+        glm_lookat(position, ADD_VEC3(center, position), up, dest);
 }
 
 void fn_printMat4(mat4 matrix)
