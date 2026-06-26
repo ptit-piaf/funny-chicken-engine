@@ -43,7 +43,7 @@ E_main fn_openglEngineLoop()
         printf("primitive = %d\n", model3d.primitiveCount);
         for(u32 i=0; i<model3d.primitiveCount; i++)
         {
-                printf("vertice count = %d", model3d.v_verticeCount[i]);
+                printf("vertice count = %d\n", model3d.v_verticeCount[i]);
                 //printf("vertice count = %d", model.v_indiceCount[i]);
         }
 
@@ -64,55 +64,6 @@ E_main fn_openglEngineLoop()
 
 
 
-/*
-        // INFO : temporary code
-
-        vec3 vertices [] =
-                {
-                        {-1.0f, -1.0f, 0.0},
-                        {1.0f, -1.0f, 0.0},
-                        {1.0f, 1.0f, 0.0},
-                        {-1.0, 1.0, 0.0}
-                };
-
-        u32 indice [] =
-                {
-                        0, 1, 2,
-                        0, 2, 3
-                };
-
-
-        u32 test[1]={0};
-        u32 test1[1]={0};
-        u32 test2[1]={0};
-        u32 test3[1]={6};
-        u32 test4[1]={0};
-
-        S_model model3d = 
-                {
-                        .v_vbo = test,
-                        .v_vao = test1,
-                        .v_ebo = test2,
-
-                        .primitiveCount = 1,
-                        .v_verticeCount = test3,
-                        .v_indiceCount = test4,
-                };
-
-        glGenBuffers(1, &model3d.v_vbo[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, model3d.v_vbo[0]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glGenVertexArrays(1, &model3d.v_vao[0]);
-        glBindVertexArray(model3d.v_vao[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, model3d.v_vbo[0]);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        glGenBuffers(1, &model3d.v_ebo[0]);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model3d.v_ebo[0]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indice), indice, GL_STATIC_DRAW);
-*/
 
 
 
@@ -153,25 +104,25 @@ E_main fn_openglEngineLoop()
         bool running = true;
         while(running)
         {
-                if(glfwGetKey(window, GLFW_KEY_D))
-                {
-                        position[0] += cos(xRotation+M_PI_2)*0.01;
-                        position[2] += sin(xRotation+M_PI_2)*0.01;
-                }
                 if(glfwGetKey(window, GLFW_KEY_A))
                 {
                         position[0] -= cos(xRotation+M_PI_2)*0.01;
                         position[2] -= sin(xRotation+M_PI_2)*0.01;
                 }
-                if(glfwGetKey(window, GLFW_KEY_S))
+                if(glfwGetKey(window, GLFW_KEY_D))
                 {
-                        position[0] -= cos(xRotation)*0.01;
-                        position[2] -= sin(xRotation)*0.01;
+                        position[0] += cos(xRotation+M_PI_2)*0.01;
+                        position[2] += sin(xRotation+M_PI_2)*0.01;
                 }
                 if(glfwGetKey(window, GLFW_KEY_W))
                 {
                         position[0] += cos(xRotation)*0.01;
                         position[2] += sin(xRotation)*0.01;
+                }
+                if(glfwGetKey(window, GLFW_KEY_S))
+                {
+                        position[0] -= cos(xRotation)*0.01;
+                        position[2] -= sin(xRotation)*0.01;
                 }
 
                 // INFO : event handling
@@ -188,7 +139,13 @@ E_main fn_openglEngineLoop()
                 {
                         fn_updateViewMat(position, (vec3){0.0f,1.0f,0.0f}, xRotation, yRotation, viewMat);
                         xRotation += event.xMouseMov*0.01f;
-                        yRotation += event.yMouseMov*0.01f;
+                        if(yRotation + event.yMouseMov*0.01f > M_PI_2-0.0001f)
+                                yRotation = M_PI_2-0.0001;
+                        else if(yRotation + event.yMouseMov*0.01f < -M_PI_2+0.0001f)
+                                yRotation = -M_PI_2+0.0001;
+                        else
+                                yRotation += event.yMouseMov*0.01f;
+
                         event.xMouseMov = 0;
                         event.yMouseMov = 0;
                 }
@@ -200,6 +157,7 @@ E_main fn_openglEngineLoop()
 
 
 
+                printf("indice count = %d\n", model3d.v_indiceCount[0]);
                 // INFO : Rendering
                 mat4 projectionViewMat;
                 glm_mat4_mul(projectionMat, viewMat, projectionViewMat);
@@ -212,7 +170,7 @@ E_main fn_openglEngineLoop()
                 for(u32 i=0; i<model3d.primitiveCount; i++)
                 {
                         glBindVertexArray(model3d.v_vao[i]);
-                        glDrawElements(GL_TRIANGLES, 6,  GL_UNSIGNED_INT, NULL);
+                        glDrawElements(GL_TRIANGLES, model3d.v_indiceCount[i],  GL_UNSIGNED_INT, NULL);
                 }
 
                 glfwSwapBuffers(window);
