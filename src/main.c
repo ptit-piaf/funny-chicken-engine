@@ -4,6 +4,12 @@
 #define CGLTF_IMPLEMENTATION
 #include <cgltf/cgltf.h>
 
+#define NK_IMPLEMENTATION
+#include <nuklear.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 

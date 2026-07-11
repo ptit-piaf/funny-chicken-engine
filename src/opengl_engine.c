@@ -1,7 +1,9 @@
+#include <nuklear.h>
 #include <GL/glad.h>
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
-#include <HOL/HOL_standard.h>
+#include <stb_image.h>
+#include <stb_truetype.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,10 +28,11 @@ E_main fn_openglEngineLoop()
         glfwGetWindowSize(window, &event.windowWidth, &event.windowHeight);
 
         i32 version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-        if(version == 0)
+        if(!version)
         {
                 fprintf(stderr, "glad failed to load\n");
-                return HOL_CREATION_FAILED;
+                returnValue = HOL_CREATION_FAILED;
+                goto GO_END_WINDOW;
         }
 
         glEnable(GL_DEBUG_OUTPUT);
@@ -40,15 +43,15 @@ E_main fn_openglEngineLoop()
 
 
         S_model model3d = fn_loadGltfFileFormat("cube.glb");
-        printf("primitive = %d\n", model3d.primitiveCount);
-        for(u32 i=0; i<model3d.primitiveCount; i++)
+        if(model3d.error != HOLY_SUCCESS)
         {
-                printf("vertice count = %d\n", model3d.v_verticeCount[i]);
-                //printf("vertice count = %d", model.v_indiceCount[i]);
+                fprintf(stderr, "3D scene loading failed.\n");
+                returnValue = HOL_CREATION_FAILED;
+                goto GO_END_WINDOW;
         }
 
         mat4 projectionMat = GLM_MAT4_IDENTITY_INIT;
-        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, projectionMat);
+        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.0001f, 1000.0f, projectionMat);
 
         mat4 viewMat = GLM_MAT4_IDENTITY_INIT;
 
@@ -81,6 +84,39 @@ E_main fn_openglEngineLoop()
 
 
 
+        char charTable[128];
+        for(u32 i=0; i<128; i++)
+        {
+                charTable[i] = i;
+        }
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        i32 width, height, nrChannels;
+        void* data = stbi_load("test.png", &width, &height, &nrChannels, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         GLuint vertexShader, fragmentShader;
@@ -90,7 +126,6 @@ E_main fn_openglEngineLoop()
         GLuint shaderProgram = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
         GLuint matrixLocation = glGetUniformLocation(shaderProgram, "modelMat");
-        mat4 var = GLM_MAT4_IDENTITY_INIT;
 
         glfwSwapInterval(1);
 
@@ -132,7 +167,7 @@ E_main fn_openglEngineLoop()
                 }
                 if(event.type & EVENT_WINDOW_SIZE)
                 {
-                        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.191919f, 10.0f, projectionMat);
+                        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.00001f, 1000.0f, projectionMat);
                         glViewport(0, 0, event.windowWidth, event.windowHeight);
                 }
                 if(event.type & EVENT_MOUSE_POS)
@@ -157,14 +192,13 @@ E_main fn_openglEngineLoop()
 
 
 
-                printf("indice count = %d\n", model3d.v_indiceCount[0]);
                 // INFO : Rendering
                 mat4 projectionViewMat;
                 glm_mat4_mul(projectionMat, viewMat, projectionViewMat);
 
                 glClear(GL_COLOR_BUFFER_BIT);
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionViewMat"), 1, GL_FALSE, *projectionViewMat);
-                glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *var);
+                glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *model3d.modelMat);
 
                 glUseProgram(shaderProgram);
                 for(u32 i=0; i<model3d.primitiveCount; i++)
@@ -177,8 +211,11 @@ E_main fn_openglEngineLoop()
                 glfwPollEvents();
         }
 
+        fn_free3DModel(&model3d);
+
         glDeleteProgram(shaderProgram);
 
+GO_END_WINDOW:
         glfwDestroyWindow(window);
 
 GO_END:

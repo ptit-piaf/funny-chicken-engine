@@ -6,10 +6,11 @@
 #include <stdlib.h>
 
 #include "file.h"
+#include "math3d.h"
 
 S_model fn_loadGltfFileFormat(const char* filePath)
 {
-        S_model model = {0};
+        S_model model = {.modelMat=GLM_MAT4_IDENTITY_INIT};
 
         if(!filePath)
         {
@@ -26,6 +27,32 @@ S_model fn_loadGltfFileFormat(const char* filePath)
                 return model;
         }
         cgltf_load_buffers(&option, fileData, filePath);
+
+        mat4 scaleMat = GLM_MAT4_IDENTITY_INIT;
+        mat4 xRotationMat = GLM_MAT4_IDENTITY_INIT;
+        mat4 yRotationMat = GLM_MAT4_IDENTITY_INIT;
+        mat4 zRotationMat = GLM_MAT4_IDENTITY_INIT;
+        mat4 translationMat = GLM_MAT4_IDENTITY_INIT;
+
+        glm_scale(scaleMat, fileData->scenes->nodes[0]->scale);
+        glm_rotate_x(xRotationMat, fileData->scenes->nodes[0]->rotation[0], xRotationMat);
+        glm_rotate_y(yRotationMat, fileData->scenes->nodes[0]->rotation[1], yRotationMat);
+        glm_rotate_z(zRotationMat, fileData->scenes->nodes[0]->rotation[2], zRotationMat);
+        glm_translate(translationMat, fileData->scenes->nodes[0]->translation);
+
+        glm_mat4_mulN((mat4* []){&translationMat, &xRotationMat, &yRotationMat, &zRotationMat, &scaleMat}, 5, model.modelMat);
+
+
+
+        //fn_printMat4((void*)fileData->scenes->nodes[0]->matrix);
+        printf("node count %d\n", fileData->scenes->nodes_count);
+        printf("Is there matrix : %d\n", fileData->scenes->nodes[0]->has_matrix);
+        printf("Is there rotation : %d\n", fileData->scenes->nodes[0]->has_rotation);
+        printf("Is there scale : %d\n", fileData->scenes->nodes[0]->has_scale);
+        printf("translation [%f, %f, %f]\n", fileData->scenes->nodes[0]->translation[0], fileData->scenes->nodes[0]->translation[1], fileData->scenes->nodes[0]->translation[2]);
+        printf("rotation [%f, %f, %f]\n", fileData->scenes->nodes[0]->rotation, fileData->scenes->nodes[0]->rotation[1], fileData->scenes->nodes[0]->rotation[2]);
+        printf("scale [%f, %f, %f]\n", fileData->scenes->nodes[0]->scale[0], fileData->scenes->nodes[0]->scale[1], fileData->scenes->nodes[0]->scale[2]);
+
 
         model.v_vao = malloc(sizeof(*model.v_vao) * fileData->meshes->primitives_count);
         model.v_vbo = malloc(sizeof(*model.v_vbo) * fileData->meshes->primitives_count);
@@ -66,97 +93,38 @@ S_model fn_loadGltfFileFormat(const char* filePath)
                 for(u32 j=0; j<primitive[i].indices->count; j++)
                         cgltf_accessor_read_uint(primitive[i].indices, j, &eboBuffer[j], 1);
 
-                printf("vbo buffer :\n");
-                for(u32 j=0; j<positionAttribute.data->count; j++)
-                        printf("%d {%f, %f, %f}\n", j, vboBuffer[j][0], vboBuffer[j][1], vboBuffer[j][2]);
+                glBindVertexArray(model.v_vao[i]);
+                glBindBuffer(GL_ARRAY_BUFFER, model.v_vbo[i]);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * positionAttribute.data->count, vboBuffer, GL_STATIC_DRAW);
 
-                printf("ebo buffer :\n");
-                for(u32 j=0; j<primitive[i].indices->count; j++)
-                        printf("%d ", eboBuffer[j]);
-                printf("\n");
-
-
-
-
-
-
-
-                
-
-
-
-
-
-
-
-
-
-
-                
-                printf("line = %d\n", __LINE__);glBindVertexArray(model.v_vao[i]);
-                printf("line = %d\n", __LINE__);glBindBuffer(GL_ARRAY_BUFFER, model.v_vbo[i]);
-                printf("line = %d\n", __LINE__);glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * positionAttribute.data->count, vboBuffer, GL_STATIC_DRAW);
-
-                printf("line = %d\n", __LINE__);glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
                 glEnableVertexAttribArray(0);
 
-                printf("line = %d\n", __LINE__);glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.v_ebo[i]);
-                printf("line = %d\n", __LINE__);glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * primitive[i].indices->count, eboBuffer, GL_STATIC_DRAW);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.v_ebo[i]);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * primitive[i].indices->count, eboBuffer, GL_STATIC_DRAW);
 
+                free(vboBuffer);
+                free(eboBuffer);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        printf("vao = [ ");
-        for(u32 i=0; i<fileData->meshes->primitives_count; i++)
-                printf("%d, ", model.v_vao[i]);
-        printf("\n");
-
-
-        printf("vbo = [ ");
-        for(u32 i=0; i<fileData->meshes->primitives_count; i++)
-                printf("%d, ", model.v_vbo[i]);
-        printf("\n");
-
-        printf("ebo = [ ");
-        for(u32 i=0; i<fileData->meshes->primitives_count; i++)
-                printf("%d, ", model.v_ebo[i]);
-        printf("\n");
-
-
-        printf("verticeCount = [ ");
-        for(u32 i=0; i<fileData->meshes->primitives_count; i++)
-                printf("%d, ", model.v_verticeCount[i]);
-        printf("\n");
-
-
-        printf("indice count = [ ");
-        for(u32 i=0; i<fileData->meshes->primitives_count; i++)
-                printf("%d, ", model.v_indiceCount[i]);
-        printf("\n");
 
 // WARNING : do not forget to free all alocated buffer.
 
         cgltf_free(fileData);
         return model;
+}
+
+void fn_free3DModel(S_model* model)
+{
+        glDeleteBuffers(model->primitiveCount, model->v_vbo);
+        glDeleteBuffers(model->primitiveCount, model->v_ebo);
+
+        glDeleteVertexArrays(model->primitiveCount, model->v_vao);
+
+        free(model->v_vbo);
+        free(model->v_ebo);
+
+        free(model->v_verticeCount);
+        free(model->v_indiceCount);
+
+        free(model->v_vao);
 }
