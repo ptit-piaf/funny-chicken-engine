@@ -4,10 +4,11 @@
 #include <stdlib.h>
 
 #include "error.h"
+#include "global_variable.h"
 
-void fn_openglErrorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, void* userParam)
+void fn_openGLErrorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, void* userParam)
 {
-        fprintf(stderr, ANSI_RED_TEXT("openGL error [%s]")" : type = %s\n%s\n",
+        fprintf(openglErrorFStream, ANSI_RED_TEXT("openGL error [%s]")" : type = %s\n%s\n",
                 (severity == GL_DEBUG_SEVERITY_HIGH ? (severity == GL_DEBUG_SEVERITY_MEDIUM ? "GL_DEBUG_SEVERITY_MEDIUM" : "GL_DEBUG_SEVERITY_LOW" ) : "GL_DEBUG_SEVERITY_HIGH"),
                 fn_openGLErrorTypeName(type), message);
 }

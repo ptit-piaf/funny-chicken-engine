@@ -5,7 +5,7 @@
 
 #include <fn_state.h>
 
-E_main fn_openglEngineLoop();
+E_main fn_openGLEngineLoop();
 
 GLFWwindow* fn_createOpenglWindow();
 

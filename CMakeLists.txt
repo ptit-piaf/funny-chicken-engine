@@ -26,4 +26,4 @@ if(DEBUG)
         set(CMAKE_C_FLAGS "-Wall -g -include /usr/include/HOL/HOL_standard.h")
 endif()
 
-target_link_libraries(${BIN} my_std glfw glad m)
+target_link_libraries(${BIN} my_std glfw glad m yyjson)

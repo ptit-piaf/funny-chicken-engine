@@ -12,6 +12,7 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <yyjson.h>
 
 #include <stdio.h>
 
@@ -19,6 +20,12 @@
 #include "fn_state.h"
 #include "engine.h"
 #include "global_variable.h"
+
+/*
+        * TODO : A prepossesor option to choose between Opengl Vulkan or both
+        * TODO : Manage main argument
+        * TODO : Create some global variable to manage text output
+*/
 
 i32 main(i32 argc, char** v_argv)
 {
@@ -37,7 +44,7 @@ i32 main(i32 argc, char** v_argv)
                 switch(state)
                 {
                         case OPENGL_ENGINE:
-                                state = fn_openglEngineLoop();
+                                state = fn_openGLEngineLoop();
                                 break;
 
                         case VULKAN_ENGINE:
@@ -49,7 +56,7 @@ i32 main(i32 argc, char** v_argv)
                                 break;
 
                         default:
-                                fprintf(stderr, ANSI_RED_TEXT("Error : ") "little rat end with error code [%d].\n", state);
+                                fprintf(stderr, ANSI_RED_TEXT("Error : ") "funny chicken engine ended with error code [%d].\n", state);
                                 returnValue = state;
                                 running = false;
                 }

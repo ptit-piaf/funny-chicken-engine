@@ -7,5 +7,5 @@ uniform mat4 projectionViewMat;
 
 void main()
 {
-        gl_Position = projectionViewMat * modelMat * vec4(pos, 1.0);
+        gl_Position = projectionViewMat * vec4(pos, 1.0);
 }

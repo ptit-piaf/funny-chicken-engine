@@ -16,7 +16,7 @@
 #include "error.h"
 #include "math3d.h"
 
-E_main fn_openglEngineLoop()
+E_main fn_openGLEngineLoop()
 {
         E_main returnValue = END;
 
@@ -37,19 +37,25 @@ E_main fn_openglEngineLoop()
 
         glEnable(GL_DEBUG_OUTPUT);
 
-        glDebugMessageCallback((GLDEBUGPROC)fn_openglErrorCallback, NULL);
+        glDebugMessageCallback((GLDEBUGPROC)fn_openGLErrorCallback, NULL);
 
         glViewport(0, 0, event.windowWidth, event.windowHeight);
 
 
-        S_model model3d = fn_loadGltfFileFormat("cube.glb");
-        if(model3d.error != HOLY_SUCCESS)
+        S_gltfFileData gltfFileData = fn_loadGltfFileFormat("cube.glb");
+        if(gltfFileData.error != HOLY_SUCCESS)
         {
                 fprintf(stderr, "3D scene loading failed.\n");
                 returnValue = HOL_CREATION_FAILED;
                 goto GO_END_WINDOW;
         }
+        //fn_printGltfFileData(gltfFileData);
 
+        S_openGLscene scene = fn_gltfFileDataToOpenGLscene(gltfFileData);
+
+
+
+        
         mat4 projectionMat = GLM_MAT4_IDENTITY_INIT;
         glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.0001f, 1000.0f, projectionMat);
 
@@ -83,7 +89,7 @@ E_main fn_openglEngineLoop()
 
 
 
-
+/*
         char charTable[128];
         for(u32 i=0; i<128; i++)
         {
@@ -101,13 +107,7 @@ E_main fn_openglEngineLoop()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
         stbi_image_free(data);
-
-
-
-
-
-
-
+*/
 
 
 
@@ -198,20 +198,19 @@ E_main fn_openglEngineLoop()
 
                 glClear(GL_COLOR_BUFFER_BIT);
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionViewMat"), 1, GL_FALSE, *projectionViewMat);
-                glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *model3d.modelMat);
+                /*mat4 modelMat = GLM_MAT4_IDENTITY_INIT;
+                glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *modelMat);*/
 
                 glUseProgram(shaderProgram);
-                for(u32 i=0; i<model3d.primitiveCount; i++)
+                for(u32 i=0; i<gltfFileData.primitiveCount; i++)
                 {
-                        glBindVertexArray(model3d.v_vao[i]);
-                        glDrawElements(GL_TRIANGLES, model3d.v_indiceCount[i],  GL_UNSIGNED_INT, NULL);
+                        glBindVertexArray(scene.v_VAO[i]);
+                        glDrawElements(GL_TRIANGLES, gltfFileData.v_indiceCount[i], GL_UNSIGNED_INT, NULL);
                 }
 
                 glfwSwapBuffers(window);
                 glfwPollEvents();
         }
-
-        fn_free3DModel(&model3d);
 
         glDeleteProgram(shaderProgram);
 

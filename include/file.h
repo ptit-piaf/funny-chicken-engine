@@ -6,57 +6,43 @@
 
 typedef enum
 {
-         TEST
-}test;
+        PRE_DEPTH_TEST = 1,
+        PRE_CLIP_FACE = 2,
 
-typedef struct  // TODO : See in the future is This struct should be in an other header
+        MODEL_MAT_IN_VBO = 4,  // INFO : I hate this name
+} E_primitiveType;
+
+typedef struct
 {
-        GLuint* v_vbo;
-        GLuint* v_vao;
-        GLuint* v_ebo;
+        GLuint* v_VBO;
+        GLuint* v_SSBO;
+        GLuint* v_EBO;
+        GLuint* v_VAO;
 
-        u32 primitiveCount;
         u32* v_verticeCount;
         u32* v_indiceCount;
-
-        mat4 modelMat;
+        u32 primitiveCount;
 
         E_error error;
-} S_model;  // INFO : I considere a model as only one mesh with multiple primitive
-
-typedef struct S_scene //INFO : Need to improve the file format to include vulkan and to implente it more propely
-{
-        
-} S_scene;
+} S_openGLscene; // INFO : I need to find a more appropriate header
 
 typedef struct S_gltfFileData
 {
-        /*void** v_preDethTestVboData;
-        u32 preDethTestVboDataCount;
-        void** v_preDethTestUboData;
-        u32 preDethTestUboDataCount;
+        void** v_VBOdata;
+        void** v_SSBOdata;
+        u32** v_EBOdata;
+        u32* v_verticeCount;
+        u32* v_indiceCount;
 
-        void** v_preCullFaceTestVboData;
-        u32 preCullFaceTestVboDataCount;
-        void** v_preCullFaceTestUboData;
-        u32 preCullFaceTestUboDataCount;
-
-        void** v_vbodata;
-        u32 v_vbodatacount;
-        void** v_ubodata;
-        u32 v_ubodatacount;*/
-
-        void** vboData;
-        u32* uboData;
+        E_primitiveType* v_primitiveType;
         u32 primitiveCount;
-
-        
 
         E_error error;
 } S_gltfFileData;
 
-S_model fn_loadGltfFileFormat(const char* filePath);
-//S_gltfFileData fn_loadGltfFileFormat(const char* filePath);
-void fn_free3DModel(S_model* model); // TODO : maybe in wrong header
+S_gltfFileData fn_loadGltfFileFormat(const char* filePath);
+void fn_freeGltfFileData(S_gltfFileData gltfFileData); // TODO : maybe in wrong header
+void fn_printGltfFileData(S_gltfFileData gltfFileData);
+S_openGLscene fn_gltfFileDataToOpenGLscene(S_gltfFileData gltfFileData);
 
 #endif

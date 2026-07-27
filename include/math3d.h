@@ -9,4 +9,6 @@ void fn_updateViewMat(vec3 position, vec3 up, float xRotation, float yRotation, 
 
 void fn_printMat4(mat4 matrix);
 
+void fn_createModelMat(vec3 translation, vec3 rotation, vec3 scale, mat4 dest);
+
 #endif
