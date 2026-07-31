@@ -41,7 +41,7 @@ S_gltfFileData fn_loadGltfFileFormat(const char* filePath)
         {
                 if(!fileData->nodes[i].mesh)
                         continue;
-                v_modelMatCount[fileData->nodes[i].mesh-fileData->nodes[i].mesh]++;  // WARNING : Maybe not very safe
+                v_modelMatCount[fileData->nodes[i].mesh - fileData->nodes[0].mesh]++;  // WARNING : Maybe not very safe
         }
 
         for(u32 i=0; i<fileData->meshes_count; i++)
@@ -54,7 +54,8 @@ S_gltfFileData fn_loadGltfFileFormat(const char* filePath)
 
                 vv_modelMat[i] = malloc(sizeof(mat4) * v_modelMatCount[i]);
 
-                for(u32 j=0; j<fileData->nodes_count; j++)
+                // WARNING : Not good loop to change
+                for(u32 j=0; j<1; j++)
                 {
                         if(!fileData->nodes[j].mesh)
                                 continue;
@@ -89,6 +90,12 @@ S_gltfFileData fn_loadGltfFileFormat(const char* filePath)
 
                         fn_createModelMat(translation, rotation, scale, vv_modelMat[i][j]);
                 }
+                for(u32 j=0; j<fileData->nodes_count; j++)
+                {
+                        fn_printMat4(vv_modelMat[i][j]);
+                        printf("\n");
+                }
+                free(vv_modelMat[i]);
         }
         gltfFileData.v_SSBOdata = NULL; // TODO :
 
