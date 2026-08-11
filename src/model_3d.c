@@ -1,22 +1,25 @@
 #include <GL/glad.h>
 #include <cglm/cglm.h>
 #include <cgltf/cgltf.h>
+#include <stb_image.h>
+#include <yyjson.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "file.h"
 #include "math3d.h"
 
-S_gltfFileData fn_loadGltfFileFormat(const char* filePath)
+S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIndex)
 {
-        S_gltfFileData gltfFileData = {0};
+        S_gltfSceneFileData gltfSceneFileData = {0};
 
         if(!filePath)
         {
-                gltfFileData.error = HOL_NULL_FILE_PATH;
-                return gltfFileData;
+                gltfSceneFileData.error = HOL_NULL_FILE_PATH;
+                return gltfSceneFileData;
         }
 
         cgltf_options option = {0};
@@ -24,192 +27,293 @@ S_gltfFileData fn_loadGltfFileFormat(const char* filePath)
         cgltf_result result = cgltf_parse_file(&option, filePath, &fileData);
         if(result != cgltf_result_success)
         {
-                gltfFileData.error = HOL_FILE_NOT_FIND;
-                return gltfFileData;
+                gltfSceneFileData.error = HOL_FILE_NOT_FIND;
+                return gltfSceneFileData;
         }
+
+        if(fileData->scenes_count <= sceneIndex)
+        {
+                gltfSceneFileData.error = HOL_PARSING_FAILED;
+                gltfSceneFileData.advancement = NONE;
+                goto GO_END;
+        }
+
+        u32 sceneMeshCount = 0;
+        cgltf_mesh** vp_sceneMesh = NULL;
+        for(u32 i=0; i<fileData->scenes[sceneIndex].nodes_count; i++)
+        {
+                if(!fileData->scenes[sceneIndex].nodes[i])
+                        continue;
+                bool meshInSceneMesh = false;
+                for(u32 j=0; j<sceneMeshCount; j++)
+                        if(vp_sceneMesh[j] == fileData->scenes[sceneIndex].nodes[i]->mesh)
+                        {
+                                meshInSceneMesh = true;
+                                break;
+                        }
+
+                if(!meshInSceneMesh)
+                {
+                        sceneMeshCount++;
+                        vp_sceneMesh = realloc(vp_sceneMesh, sceneMeshCount);
+                        vp_sceneMesh[i] = fileData->scenes[sceneIndex].nodes[i]->mesh;
+                }
+        }
+
+        for(u32 i=0; i<sceneMeshCount; i++)
+                gltfSceneFileData.primitiveCount += vp_sceneMesh[i]->primitives_count;
+
+        // INFO : the following malloc that allow array of pointer are not very optimize.
+        // Those ptr may point to a NULL adress when a functionnality is not used.
+        gltfSceneFileData.v_VBOdata = malloc(sizeof(void*) * gltfSceneFileData.primitiveCount);
+        gltfSceneFileData.v_UBOdata = malloc(sizeof(void*) * gltfSceneFileData.primitiveCount);
+        gltfSceneFileData.v_SSBOdata = malloc(sizeof(void*) * gltfSceneFileData.primitiveCount);
+        gltfSceneFileData.v_EBOdata = malloc(sizeof(u32*) * gltfSceneFileData.primitiveCount);
+        gltfSceneFileData.v_texturePath = malloc(sizeof(char*) * gltfSceneFileData.primitiveCount);
+        gltfSceneFileData.v_primitiveType = malloc(sizeof(u32) * gltfSceneFileData.primitiveCount);
+        gltfSceneFileData.v_verticeCount = malloc(sizeof(u32) * gltfSceneFileData.primitiveCount);
+        gltfSceneFileData.v_indiceCount = malloc(sizeof(u32) * gltfSceneFileData.primitiveCount);
+
         cgltf_load_buffers(&option, fileData, filePath);
-
-        printf("is it  working ??? %d\n", fileData->meshes[1].primitives[0].indices->count);
-
-        for(u32 i=0; i<fileData->meshes_count; i++)
-                gltfFileData.primitiveCount += fileData->meshes[i].primitives_count;
-
-        u32* v_modelMatCount = calloc(sizeof(u32) * fileData->meshes_count, 1);
-        mat4** vv_modelMat = malloc(sizeof(mat4*) * gltfFileData.primitiveCount);
-
-        for(u32 i=0; i<fileData->nodes_count; i++)
-        {
-                if(!fileData->nodes[i].mesh)
-                        continue;
-                v_modelMatCount[fileData->nodes[i].mesh - fileData->nodes[0].mesh]++;  // WARNING : Maybe not very safe
-        }
-
-        for(u32 i=0; i<fileData->meshes_count; i++)
-        {
-                if(!fileData->nodes[i].mesh)
-                        continue;
-
-                if(v_modelMatCount[i] == 0)
-                        v_modelMatCount[i] = 1;
-
-                vv_modelMat[i] = malloc(sizeof(mat4) * v_modelMatCount[i]);
-
-                // WARNING : Not good loop to change
-                for(u32 j=0; j<1; j++)
-                {
-                        if(!fileData->nodes[j].mesh)
-                                continue;
-                        if(fileData->nodes[j].has_matrix)
-                        {
-                                memcpy(vv_modelMat[i][j], fileData->nodes[j].matrix, sizeof(mat4));
-                                continue;
-                        }
-
-                        vec3 translation = {0.0f, 0.0f, 0.0f};
-                        vec4 rotation = {0.0f, 0.0f, 0.0f, 1.0f};
-                        vec3 scale = {1.0f, 1.0f, 1.0f};
-
-                        if(fileData->nodes[j].has_translation)
-                        {
-                                translation[0] = fileData->nodes[j].translation[0];
-                                translation[1] = fileData->nodes[j].translation[1];
-                                translation[2] = fileData->nodes[j].translation[2];
-                        }
-                        if(fileData->nodes[j].has_rotation)
-                        {
-                                rotation[0] = fileData->nodes[j].rotation[0];
-                                rotation[1] = fileData->nodes[j].rotation[1];
-                                rotation[2] = fileData->nodes[j].rotation[2];
-                        }
-                        if(fileData->nodes[j].has_scale)
-                        {
-                                scale[0] = fileData->nodes[j].scale[0];
-                                scale[1] = fileData->nodes[j].scale[1];
-                                scale[2] = fileData->nodes[j].scale[2];
-                        }
-
-                        fn_createModelMat(translation, rotation, scale, vv_modelMat[i][j]);
-                }
-                for(u32 j=0; j<fileData->nodes_count; j++)
-                {
-                        fn_printMat4(vv_modelMat[i][j]);
-                        printf("\n");
-                }
-                free(vv_modelMat[i]);
-        }
-        gltfFileData.v_SSBOdata = NULL; // TODO :
+        // TODO : the fn to get a mat from a quaternion glm_quat_mat4
 
 
-        gltfFileData.v_VBOdata = malloc(sizeof(void*) * gltfFileData.primitiveCount);
-        gltfFileData.v_EBOdata = malloc(sizeof(u32*) * gltfFileData.primitiveCount);
-        gltfFileData.v_verticeCount = malloc(sizeof(u32) * gltfFileData.primitiveCount);
-        gltfFileData.v_indiceCount = malloc(sizeof(u32) * gltfFileData.primitiveCount);
-
-
-        printf("meshes count %d\n", fileData->meshes_count);
 
         u32 primitiveIndex = 0;
-        for(u32 i=0; i<fileData->meshes_count; i++)
+        for(u32 i=0; i<sceneMeshCount; i++)
         {
-                for(u32 j=0; j<fileData->meshes[i].primitives_count; j++)
+                mat4* v_modelMat = NULL;
+                u32 nodeCountPerMesh = 0;
+                for(u32 j=0; j<fileData->scenes[sceneIndex].nodes_count; j++)
                 {
+                        if(fileData.nodes[j].mesh != vp_sceneMesh[i])
+                                continue;
+                        nodeCountPerMesh++;
+                        v_modelMat = realloc(v_modelMat, sizeof(mat4) * nodeCountPerMesh);
 
-                        printf("primitive count %d\n", fileData->meshes[0].primitives_count);
-                        cgltf_attribute positionAttribute, normalAttribute, uvAttribute;
-                        for(u32 o=0; o<fileData->meshes[i].primitives[j].attributes_count; o++)
-                                switch(fileData->meshes[i].primitives[j].attributes[o].type)
+                        vec3 scaleVec = {1.0f, 1.0f, 1.0f};
+                        vec4 rotationVec = {1.0f, 0.0f, 0.0f, 0.0f}; // WARNING : I'm not sure that this is the correct quaternion
+                        vec3 translationVec = {0.0f, 0.0f, 0.0f};
+
+                        if(fileData->scenes[sceneIndex].nodes[j].has_scale)
+                        {
+                                scaleVec[0] = fileData->scenes[sceneIndex].nodes[j].scale[0];
+                                scaleVec[1] = fileData->scenes[sceneIndex].nodes[j].scale[1];
+                                scaleVec[2] = fileData->scenes[sceneIndex].nodes[j].scale[2];
+                        }
+                        if(fileData->scenes[sceneIndex].nodes[j].has_rotation)
+                        {
+                                rotationVec[0] = fileData->scenes[sceneIndex].nodes[j].rotation[0];
+                                rotationVec[1] = fileData->scenes[sceneIndex].nodes[j].rotation[1];
+                                rotationVec[2] = fileData->scenes[sceneIndex].nodes[j].rotation[2];
+                                rotationVec[3] = fileData->scenes[sceneIndex].nodes[j].rotation[3];
+                        }
+                        if(fileData->scenes[sceneIndex].nodes[j].has_translation)
+                        {
+                                translationVec[0] = fileData->scenes[sceneIndex].nodes[j].translation[0];
+                                translationVec[1] = fileData->scenes[sceneIndex].nodes[j].translation[1];
+                                translationVec[2] = fileData->scenes[sceneIndex].nodes[j].translation[2];
+                        }
+
+                        fn_createModelMat(translationVec, rotationVec, scaleVec, &v_modelMat[j]);
+                }
+
+
+                // TODO : implemente other extra variable (only if necessary)
+                E_primitiveType meshType = MODEL_MAT_IN_VBO; // TODO : find the best auto mesh type
+                if(vp_sceneMesh[i]->extras.data)
+                {
+                        yyjson_doc* jsonDoc = yyjson_read(vp_sceneMesh[i]->extras.data, strlen(vp_sceneMesh[i]->extras.data), 0);
+                        yyjson_val* jsonRoot = yyjson_doc_get_root(jsonDoc);
+
+                        yyjson_val* jsonProp = yyjson_obj_get(jsonRoot, "prop");
+                        if((jsonProp->tag & YYJSON_TYPE_NUM) &&
+                                !(jsonProp->tag | YYJSON_SUBTYPE_UINT) && // INFO : YYJSON_SUBTYPE_UINT is a weard macro
+                                jsonProp)
+                                meshType = (int)yyjson_get_int(jsonProp);
+
+                        yyjson_doc_free(jsonDoc);
+                }
+
+                for(u32 j=0; j<vp_sceneMesh[i]->primitives_count; j++)
+                {
+                        gltfSceneFileData.v_primitiveType[primitiveIndex] = 0;
+                        if(vp_sceneMesh[i]->primitives[j].extras.data)
+                        {
+                                yyjson_doc* jsonDoc = yyjson_read(vp_sceneMesh[i]->extras.data, strlen(vp_sceneMesh[i]->extras.data), 0);
+                                yyjson_val* jsonRoot = yyjson_doc_get_root(jsonDoc);
+
+                                yyjson_val* jsonProp = yyjson_obj_get(jsonRoot, "prop");
+                                if((jsonProp->tag & YYJSON_TYPE_NUM) &&
+                                        !(jsonProp->tag | YYJSON_SUBTYPE_UINT) && // INFO : YYJSON_SUBTYPE_UINT is a weard macro
+                                        jsonProp)
+                                        gltfSceneFileData.v_primitiveType[primitiveIndex] = (int)yyjson_get_int(jsonProp);
+
+                                yyjson_doc_free(jsonDoc);
+                        }
+                        gltfSceneFileData.v_primitiveType[primitiveIndex] |= meshType;
+
+                        cgltf_attribute positionAttribute = {0};
+                        cgltf_attribute normalAttribute = {0};
+                        cgltf_attribute uvAttribute = {0};
+                        for(u32 o=0; o<vp_sceneMesh[i]->primitives[j].attributes_count; o++)
+                                switch(vp_sceneMesh[i]->primitives[j].attributes[o].type)
                                 {
                                         case cgltf_attribute_type_position:
-                                                positionAttribute = fileData->meshes[i].primitives[j].attributes[o];
+                                                positionAttribute = vp_sceneMesh[i]->primitives[j].attributes[o];
+                                                break;
+                                        case cgltf_attribute_type_texcoord:
+                                                uvAttribute = vp_sceneMesh[i]->primitives[j].attributes[o];
                                                 break;
                                 }
 
-                        gltfFileData.v_verticeCount[primitiveIndex] = positionAttribute.data->count;
-                        gltfFileData.v_indiceCount[primitiveIndex] = fileData->meshes[i].primitives[j].indices->count;
-                        fprintf(stderr, "vertice count = %d\n", positionAttribute.data->count);
-                        gltfFileData.v_VBOdata[primitiveIndex] = malloc(sizeof(vec3) * positionAttribute.data->count);
+
+
+                        gltfSceneFileData.v_verticeCount[primitiveIndex] = positionAttribute.data->count;
+                        gltfSceneFileData.v_indiceCount[primitiveIndex] = vp_sceneMesh[i]->primitives[j].indices->count;
+                        gltfSceneFileData.v_VBOdata[primitiveIndex] = malloc(sizeof(S_VBO) * positionAttribute.data->count);
                         for(u32 o=0; o<positionAttribute.data->count; o++)
-                                cgltf_accessor_read_float(positionAttribute.data, o, ((vec3*)gltfFileData.v_VBOdata[primitiveIndex])[o], 3);
+                                cgltf_accessor_read_float(positionAttribute.data, o, ((S_VBO*)gltfSceneFileData.v_VBOdata[primitiveIndex])[o].position, 3);
 
+                        for(u32 o=0; o<uvAttribute.data->count; o++)
+                                cgltf_accessor_read_float(uvAttribute.data, o, ((S_VBO*)gltfSceneFileData.v_VBOdata[primitiveIndex])[o].uv, 3);
 
+                        if()
+                        {
+                                gltfSceneFileData.v_EBOdata[primitiveIndex] = malloc(sizeof(u32) * vp_sceneMesh[i]->primitives[j].indices->count);
+                                for(u32 o=0; o<vp_sceneMesh[i]->primitives[j].indices->count; o++)
+                                        cgltf_accessor_read_uint(vp_sceneMesh[i]->primitives[j].indices, o, &gltfSceneFileData.v_EBOdata[primitiveIndex][o], 1);
+                        }
 
-                        gltfFileData.v_EBOdata[primitiveIndex] = malloc(sizeof(u32) * fileData->meshes[i].primitives[j].indices->count);
-                        printf("what ??????? %d\n", fileData->meshes[1].primitives[0].indices->is_sparse);
-                        for(u32 o=0; o<fileData->meshes[i].primitives[j].indices->count; o++)
-                                cgltf_accessor_read_uint(fileData->meshes[i].primitives[j].indices, o, &gltfFileData.v_EBOdata[primitiveIndex][o], 1);
+                        gltfSceneFileData.v_texturePath[primitiveIndex] = malloc(strlen(vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri));
+                        strcpy(gltfSceneFileData.v_texturePath[primitiveIndex], vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri);
+
+                        if(!gltfSceneFileData.v_texturePath[primitiveIndex], vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri)
+                        {
+
+                        }
 
                         primitiveIndex++;
-                        printf("i = %d\n", i);
                 }
+                free(v_modelMat);
         }
 
 // WARNING : do not forget to free all allocated buffer.
 
+        free(vp_sceneMesh);
+
+GO_END:
         cgltf_free(fileData);
-        return gltfFileData;
+        return gltfSceneFileData;
 }
 
-void fn_printGltfFileData(S_gltfFileData gltfFileData)
+void fn_printGltfFileData(S_gltfSceneFileData gltfSceneFileData)
 {
         printf("gltf file data :\n");
-        printf("primitive count = %d\n", gltfFileData.primitiveCount);
+        printf("primitive count = %d\n", gltfSceneFileData.primitiveCount);
         printf("SSBO in construction\n");
-        for(u32 i=0; i<gltfFileData.primitiveCount; i++)
+        for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
         {
                 printf("primitive[%d]\n", i);
                 printf("\tvbo :\n\t\tposition\n");
-                for(u32 j=0; j<gltfFileData.v_verticeCount[i]; j++)
+                for(u32 j=0; j<gltfSceneFileData.v_verticeCount[i]; j++)
                 {
                         printf("j=%d\n", j);
-                        printf("\t\t\t(%f, %f, %f)\n", ((vec3*)gltfFileData.v_VBOdata[i])[j][0], ((vec3*)gltfFileData.v_VBOdata[i])[j][1], ((vec3*)gltfFileData.v_VBOdata[i])[j][2]);
+                        printf("\t\t\t(%f, %f, %f)\n", ((vec3*)gltfSceneFileData.v_VBOdata[i])[j][0], ((vec3*)gltfSceneFileData.v_VBOdata[i])[j][1], ((vec3*)gltfSceneFileData.v_VBOdata[i])[j][2]);
                 }
                 printf("\t\tebo\n\t\t\t[ ");
-                for(u32 j=0; j<gltfFileData.v_verticeCount[i]; j++)
-                        printf("%d ",gltfFileData.v_EBOdata[i][j]);
+                for(u32 j=0; j<gltfSceneFileData.v_verticeCount[i]; j++)
+                        printf("%d ",gltfSceneFileData.v_EBOdata[i][j]);
                 printf("]\n");
         }
 }
 
 
 
-void fn_freeGltfFileData(S_gltfFileData gltfFileData) // TODO : 
+void fn_freeGltfFileData(S_gltfSceneFileData gltfSceneFileData) // TODO : 
 {
+        switch(gltfSceneFileData.advancement)
+        {
+                case COMPLETE:
+                        for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
+                        {
+                                if(gltfSceneFileData.v_VBOdata[i])
+                                        free(gltfSceneFileData.v_VBOdata[i]);
+                                if(gltfSceneFileData.v_SSBOdata[i])
+                                        free(gltfSceneFileData.v_SSBOdata[i]);
+                                if(gltfSceneFileData.v_UBOdata[i])
+                                        free(gltfSceneFileData.v_UBOdata[i]);
+                                if(gltfSceneFileData.v_EBOdata[i])
+                                        free(gltfSceneFileData.v_EBOdata[i]);
+                                if(gltfSceneFileData.v_texturePath[i])
+                                        free(gltfSceneFileData.v_texturePath[i]);
+                        }
+
+                        free(gltfSceneFileData.v_VBOdata);
+                        free(gltfSceneFileData.v_UBOdata);
+                        free(gltfSceneFileData.v_SSBOdata);
+                        free(gltfSceneFileData.v_EBOdata);
+                        free(gltfSceneFileData.v_texturePath);
+                        free(gltfSceneFileData.v_primitiveType);
+                        free(gltfSceneFileData.v_verticeCount);
+                        free(gltfSceneFileData.v_indiceCount);
+
+                case NONE:
+        }
         return;
 }
 
-S_openGLscene fn_gltfFileDataToOpenGLscene(S_gltfFileData gltfFileData) // INFO : The function do not check if the parameter are ok
+S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFileData) // INFO : The function do not check if the parameter are ok
 {
         S_openGLscene scene = {0};
 
-        scene.v_VBO = malloc(sizeof(u32) * gltfFileData.primitiveCount);
+        scene.v_VBO = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
         scene.v_SSBO = NULL;
-        scene.v_EBO = malloc(sizeof(u32) * gltfFileData.primitiveCount);
-        scene.v_VAO = malloc(sizeof(u32) * gltfFileData.primitiveCount);
+        scene.v_EBO = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
+        scene.v_VAO = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
 
-        scene.v_verticeCount = malloc(sizeof(u32) * gltfFileData.primitiveCount);
-        scene.v_indiceCount = malloc(sizeof(u32) * gltfFileData.primitiveCount);
-        scene.primitiveCount = gltfFileData.primitiveCount;
+        scene.v_verticeCount = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
+        scene.v_indiceCount = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
+        scene.v_TBO = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
+        scene.primitiveCount = gltfSceneFileData.primitiveCount;
 
-        glGenBuffers(gltfFileData.primitiveCount, scene.v_VBO);
-        glGenBuffers(gltfFileData.primitiveCount, scene.v_EBO);
+        glGenBuffers(gltfSceneFileData.primitiveCount, scene.v_VBO);
+        glGenBuffers(gltfSceneFileData.primitiveCount, scene.v_EBO);
+        glGenTextures(gltfSceneFileData.primitiveCount, scene.v_TBO); // WARNING : unoptimise
 
-        glGenVertexArrays(gltfFileData.primitiveCount, scene.v_VAO);
 
-        for(u32 i=0; i<gltfFileData.primitiveCount; i++)
+        for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
+        glGenVertexArrays(gltfSceneFileData.primitiveCount, scene.v_VAO);
+
+        for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
         {
-                scene.v_verticeCount[i] = gltfFileData.v_verticeCount[i];
-                scene.v_indiceCount[i] = gltfFileData.v_indiceCount[i];
+                scene.v_verticeCount[i] = gltfSceneFileData.v_verticeCount[i];
+                scene.v_indiceCount[i] = gltfSceneFileData.v_indiceCount[i];
 
                 glBindVertexArray(scene.v_VAO[i]);
 
                 glBindBuffer(GL_ARRAY_BUFFER, scene.v_VBO[i]);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * scene.v_verticeCount[i], gltfFileData.v_VBOdata[i], GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(S_VBO) * scene.v_verticeCount[i], gltfSceneFileData.v_VBOdata[i], GL_STATIC_DRAW);
 
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(S_VBO), (void*)0);
                 glEnableVertexAttribArray(0);
 
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(S_VBO), (void*)(sizeof(vec3)));
+                glEnableVertexAttribArray(1);
+
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.v_EBO[i]);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * scene.v_indiceCount[i], gltfFileData.v_EBOdata[i], GL_STATIC_DRAW);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * scene.v_indiceCount[i], gltfSceneFileData.v_EBOdata[i], GL_STATIC_DRAW);
+
+                glBindTexture(GL_TEXTURE_2D, scene.v_TBO[i]);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                i32 textureWidth, textureHeight;
+                i32 nrChannel;
+                void* textureData = stbi_load("model_3d/Cube Base Color.png", &textureWidth, &textureHeight, &nrChannel, 0);  // TODO : use getcwd to get the full path file
+                printf("nrChannel ptr =%d\n", textureHeight);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
+                glGenerateMipmap(GL_TEXTURE_2D);
+                stbi_image_free(textureData);
         }
 
         return scene;

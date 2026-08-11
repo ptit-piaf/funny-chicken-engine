@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 extern FILE* g_eventFStream;
-extern FILE* openglErrorFStream;
+extern FILE* g_openglErrorFStream;
 
 void fn_manageMainArg();
 

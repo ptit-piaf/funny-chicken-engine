@@ -16,6 +16,7 @@ set(SOURCE src/main.c
         src/mouse_event.c
         src/opengl_error.c
         src/mat.c
+        src/file.c
 )
 
 set(BIN funny)
@@ -26,4 +27,4 @@ if(DEBUG)
         set(CMAKE_C_FLAGS "-Wall -g -include /usr/include/HOL/HOL_standard.h")
 endif()
 
-target_link_libraries(${BIN} my_std glfw glad m yyjson)
+target_link_libraries(${BIN} yyjson glfw glad m yyjson)

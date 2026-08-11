@@ -4,17 +4,16 @@
 #define CGLTF_IMPLEMENTATION
 #include <cgltf/cgltf.h>
 
-#define NK_IMPLEMENTATION
-#include <nuklear.h>
+//considere the nuklear lib
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <GL/glew.h>
+#include <GL/glad.h>
 #include <GLFW/glfw3.h>
 #include <yyjson.h>
 
-#include <stdio.h>
+#include <stdio.h>     
 
 #include "error.h"
 #include "fn_state.h"
@@ -25,6 +24,8 @@
         * TODO : A prepossesor option to choose between Opengl Vulkan or both
         * TODO : Manage main argument
         * TODO : Create some global variable to manage text output
+
+        * WARNING : some functionnality are posix only
 */
 
 i32 main(i32 argc, char** v_argv)

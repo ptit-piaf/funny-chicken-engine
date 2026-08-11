@@ -1,4 +1,3 @@
-#include <nuklear.h>
 #include <GL/glad.h>
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
@@ -42,16 +41,16 @@ E_main fn_openGLEngineLoop()
         glViewport(0, 0, event.windowWidth, event.windowHeight);
 
 
-        S_gltfFileData gltfFileData = fn_loadGltfFileFormat("cube.glb");
-        if(gltfFileData.error != HOLY_SUCCESS)
+        S_gltfSceneFileData gltfSceneFileData = fn_loadGltfSceneFileFormat("model_3d/Untitled.gltf", 0);
+        if(gltfSceneFileData.error != HOLY_SUCCESS)
         {
                 fprintf(stderr, "3D scene loading failed.\n");
                 returnValue = HOL_CREATION_FAILED;
                 goto GO_END_WINDOW;
         }
-        //fn_printGltfFileData(gltfFileData);
+        //fn_printGltfFileData(gltfSceneFileData);
 
-        S_openGLscene scene = fn_gltfFileDataToOpenGLscene(gltfFileData);
+        S_openGLscene scene = fn_gltfSceneFileDataToOpenGLscene(gltfSceneFileData);
 
 
 
@@ -116,7 +115,7 @@ E_main fn_openGLEngineLoop()
 
 
 
-
+        glEnable(GL_DEPTH_TEST);
 
         GLuint vertexShader, fragmentShader;
         vertexShader = fn_compileOpenglShader("test.vert", GL_VERTEX_SHADER);
@@ -195,16 +194,17 @@ E_main fn_openGLEngineLoop()
                 mat4 projectionViewMat;
                 glm_mat4_mul(projectionMat, viewMat, projectionViewMat);
 
-                glClear(GL_COLOR_BUFFER_BIT);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionViewMat"), 1, GL_FALSE, *projectionViewMat);
                 /*mat4 modelMat = GLM_MAT4_IDENTITY_INIT;
                 glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *modelMat);*/
 
                 glUseProgram(shaderProgram);
-                for(u32 i=0; i<gltfFileData.primitiveCount; i++)
+                for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
                 {
+                        glBindTexture(GL_TEXTURE_2D, scene.v_TBO[i]);
                         glBindVertexArray(scene.v_VAO[i]);
-                        glDrawElements(GL_TRIANGLES, gltfFileData.v_indiceCount[i], GL_UNSIGNED_INT, NULL);
+                        glDrawElements(GL_TRIANGLES, gltfSceneFileData.v_indiceCount[i], GL_UNSIGNED_INT, NULL);
                 }
 
                 glfwSwapBuffers(window);
