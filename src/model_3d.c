@@ -10,11 +10,15 @@
 #include <unistd.h>
 
 #include "file.h"
+#include "render.h"
+#include "shader.h"
 #include "math3d.h"
 
 S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIndex)
 {
         S_gltfSceneFileData gltfSceneFileData = {0};
+
+        char* dirPath = HOL_getDirPathFromFilePath(filePath);
 
         if(!filePath)
         {
@@ -24,8 +28,8 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
 
         cgltf_options option = {0};
         cgltf_data* fileData = NULL;
-        cgltf_result result = cgltf_parse_file(&option, filePath, &fileData);
-        if(result != cgltf_result_success)
+        cgltf_result cgltfResult = cgltf_parse_file(&option, filePath, &fileData);
+        if(cgltfResult != cgltf_result_success)
         {
                 gltfSceneFileData.error = HOL_FILE_NOT_FIND;
                 return gltfSceneFileData;
@@ -34,7 +38,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
         if(fileData->scenes_count <= sceneIndex)
         {
                 gltfSceneFileData.error = HOL_PARSING_FAILED;
-                gltfSceneFileData.advancement = NONE;
+                gltfSceneFileData.advancement = ADVANCEMENT_NULL;
                 goto GO_END;
         }
 
@@ -86,7 +90,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                 u32 nodeCountPerMesh = 0;
                 for(u32 j=0; j<fileData->scenes[sceneIndex].nodes_count; j++)
                 {
-                        if(fileData.nodes[j].mesh != vp_sceneMesh[i])
+                        if(fileData->nodes[j].mesh != vp_sceneMesh[i])
                                 continue;
                         nodeCountPerMesh++;
                         v_modelMat = realloc(v_modelMat, sizeof(mat4) * nodeCountPerMesh);
@@ -95,32 +99,32 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                         vec4 rotationVec = {1.0f, 0.0f, 0.0f, 0.0f}; // WARNING : I'm not sure that this is the correct quaternion
                         vec3 translationVec = {0.0f, 0.0f, 0.0f};
 
-                        if(fileData->scenes[sceneIndex].nodes[j].has_scale)
+                        if(fileData->scenes[sceneIndex].nodes[j]->has_scale)
                         {
-                                scaleVec[0] = fileData->scenes[sceneIndex].nodes[j].scale[0];
-                                scaleVec[1] = fileData->scenes[sceneIndex].nodes[j].scale[1];
-                                scaleVec[2] = fileData->scenes[sceneIndex].nodes[j].scale[2];
+                                scaleVec[0] = fileData->scenes[sceneIndex].nodes[j]->scale[0];
+                                scaleVec[1] = fileData->scenes[sceneIndex].nodes[j]->scale[1];
+                                scaleVec[2] = fileData->scenes[sceneIndex].nodes[j]->scale[2];
                         }
-                        if(fileData->scenes[sceneIndex].nodes[j].has_rotation)
+                        if(fileData->scenes[sceneIndex].nodes[j]->has_rotation)
                         {
-                                rotationVec[0] = fileData->scenes[sceneIndex].nodes[j].rotation[0];
-                                rotationVec[1] = fileData->scenes[sceneIndex].nodes[j].rotation[1];
-                                rotationVec[2] = fileData->scenes[sceneIndex].nodes[j].rotation[2];
-                                rotationVec[3] = fileData->scenes[sceneIndex].nodes[j].rotation[3];
+                                rotationVec[0] = fileData->scenes[sceneIndex].nodes[j]->rotation[0];
+                                rotationVec[1] = fileData->scenes[sceneIndex].nodes[j]->rotation[1];
+                                rotationVec[2] = fileData->scenes[sceneIndex].nodes[j]->rotation[2];
+                                rotationVec[3] = fileData->scenes[sceneIndex].nodes[j]->rotation[3];
                         }
-                        if(fileData->scenes[sceneIndex].nodes[j].has_translation)
+                        if(fileData->scenes[sceneIndex].nodes[j]->has_translation)
                         {
-                                translationVec[0] = fileData->scenes[sceneIndex].nodes[j].translation[0];
-                                translationVec[1] = fileData->scenes[sceneIndex].nodes[j].translation[1];
-                                translationVec[2] = fileData->scenes[sceneIndex].nodes[j].translation[2];
+                                translationVec[0] = fileData->scenes[sceneIndex].nodes[j]->translation[0];
+                                translationVec[1] = fileData->scenes[sceneIndex].nodes[j]->translation[1];
+                                translationVec[2] = fileData->scenes[sceneIndex].nodes[j]->translation[2];
                         }
 
-                        fn_createModelMat(translationVec, rotationVec, scaleVec, &v_modelMat[j]);
+                        fn_createModelMat(translationVec, rotationVec, scaleVec, v_modelMat[j]);
                 }
 
 
                 // TODO : implemente other extra variable (only if necessary)
-                E_primitiveType meshType = MODEL_MAT_IN_VBO; // TODO : find the best auto mesh type
+                E_primitiveType meshType = MODEL_MAT_IN_VBO; // TODO : find the best default mesh type
                 if(vp_sceneMesh[i]->extras.data)
                 {
                         yyjson_doc* jsonDoc = yyjson_read(vp_sceneMesh[i]->extras.data, strlen(vp_sceneMesh[i]->extras.data), 0);
@@ -137,7 +141,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
 
                 for(u32 j=0; j<vp_sceneMesh[i]->primitives_count; j++)
                 {
-                        gltfSceneFileData.v_primitiveType[primitiveIndex] = 0;
+                        gltfSceneFileData.v_primitiveType[primitiveIndex] = 0;  // TODO : find the best default primitive type
                         if(vp_sceneMesh[i]->primitives[j].extras.data)
                         {
                                 yyjson_doc* jsonDoc = yyjson_read(vp_sceneMesh[i]->extras.data, strlen(vp_sceneMesh[i]->extras.data), 0);
@@ -145,7 +149,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
 
                                 yyjson_val* jsonProp = yyjson_obj_get(jsonRoot, "prop");
                                 if((jsonProp->tag & YYJSON_TYPE_NUM) &&
-                                        !(jsonProp->tag | YYJSON_SUBTYPE_UINT) && // INFO : YYJSON_SUBTYPE_UINT is a weard macro
+                                        !(jsonProp->tag & (YYJSON_SUBTYPE_UINT|0xFF)) && // INFO : YYJSON_SUBTYPE_UINT is a weard macro see yyjson
                                         jsonProp)
                                         gltfSceneFileData.v_primitiveType[primitiveIndex] = (int)yyjson_get_int(jsonProp);
 
@@ -167,32 +171,40 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                                                 break;
                                 }
 
+                        if(!positionAttribute.data)
+                        {
+                                gltfSceneFileData.v_primitiveType[primitiveIndex] |= PRIMITVE_FATAL_ERROR;
+                                continue;
+                        }
+
+                        if(!uvAttribute.data && gltfSceneFileData.v_primitiveType[primitiveIndex] & BASE_COLOR_TEXTURE)
+                                gltfSceneFileData.v_primitiveType[primitiveIndex] |= UV_MISSING | PRIMITVE_ERROR; // WARNING : see include/file.h
 
 
                         gltfSceneFileData.v_verticeCount[primitiveIndex] = positionAttribute.data->count;
                         gltfSceneFileData.v_indiceCount[primitiveIndex] = vp_sceneMesh[i]->primitives[j].indices->count;
-                        gltfSceneFileData.v_VBOdata[primitiveIndex] = malloc(sizeof(S_VBO) * positionAttribute.data->count);
+                        gltfSceneFileData.v_VBOdata[primitiveIndex] = malloc(fn_getVBOsizeFromPrimitiveType(0, NULL) * positionAttribute.data->count);
                         for(u32 o=0; o<positionAttribute.data->count; o++)
                                 cgltf_accessor_read_float(positionAttribute.data, o, ((S_VBO*)gltfSceneFileData.v_VBOdata[primitiveIndex])[o].position, 3);
 
                         for(u32 o=0; o<uvAttribute.data->count; o++)
                                 cgltf_accessor_read_float(uvAttribute.data, o, ((S_VBO*)gltfSceneFileData.v_VBOdata[primitiveIndex])[o].uv, 3);
 
-                        if()
+                        gltfSceneFileData.v_EBOdata[primitiveIndex] = malloc(sizeof(u32) * vp_sceneMesh[i]->primitives[j].indices->count);
+                        for(u32 o=0; o<vp_sceneMesh[i]->primitives[j].indices->count; o++)
+                                cgltf_accessor_read_uint(vp_sceneMesh[i]->primitives[j].indices, o, &gltfSceneFileData.v_EBOdata[primitiveIndex][o], 1);
+
+                        gltfSceneFileData.v_texturePath[primitiveIndex] = malloc(strlen(dirPath) + fn_getFileSystemSizeFromUri(vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri));
+                        E_error result = fn_uriToFileSystem(vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri, 
+                                                            &gltfSceneFileData.v_texturePath[primitiveIndex][strlen(dirPath)]);
+                        memcpy(gltfSceneFileData.v_texturePath[primitiveIndex], dirPath, strlen(dirPath));
+                        printf("texture path = %s\n", gltfSceneFileData.v_texturePath[primitiveIndex]);
+                        if(result != HOLY_SUCCESS)
                         {
-                                gltfSceneFileData.v_EBOdata[primitiveIndex] = malloc(sizeof(u32) * vp_sceneMesh[i]->primitives[j].indices->count);
-                                for(u32 o=0; o<vp_sceneMesh[i]->primitives[j].indices->count; o++)
-                                        cgltf_accessor_read_uint(vp_sceneMesh[i]->primitives[j].indices, o, &gltfSceneFileData.v_EBOdata[primitiveIndex][o], 1);
+                                free(gltfSceneFileData.v_texturePath[primitiveIndex]);
+                                gltfSceneFileData.v_texturePath[primitiveIndex] = NULL;
+                                gltfSceneFileData.v_primitiveType[primitiveIndex] |= BASE_COLOR_TEXTURE_MISSING | PRIMITVE_ERROR;
                         }
-
-                        gltfSceneFileData.v_texturePath[primitiveIndex] = malloc(strlen(vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri));
-                        strcpy(gltfSceneFileData.v_texturePath[primitiveIndex], vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri);
-
-                        if(!gltfSceneFileData.v_texturePath[primitiveIndex], vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture->image->uri)
-                        {
-
-                        }
-
                         primitiveIndex++;
                 }
                 free(v_modelMat);
@@ -203,6 +215,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
         free(vp_sceneMesh);
 
 GO_END:
+        free(dirPath);
         cgltf_free(fileData);
         return gltfSceneFileData;
 }
@@ -234,7 +247,7 @@ void fn_freeGltfFileData(S_gltfSceneFileData gltfSceneFileData) // TODO :
 {
         switch(gltfSceneFileData.advancement)
         {
-                case COMPLETE:
+                case ADVANCEMENT_COMPLETE:
                         for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
                         {
                                 if(gltfSceneFileData.v_VBOdata[i])
@@ -258,7 +271,7 @@ void fn_freeGltfFileData(S_gltfSceneFileData gltfSceneFileData) // TODO :
                         free(gltfSceneFileData.v_verticeCount);
                         free(gltfSceneFileData.v_indiceCount);
 
-                case NONE:
+                case ADVANCEMENT_NULL:
         }
         return;
 }
@@ -292,29 +305,47 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
 
                 glBindVertexArray(scene.v_VAO[i]);
 
+                // VBO allocation
                 glBindBuffer(GL_ARRAY_BUFFER, scene.v_VBO[i]);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(S_VBO) * scene.v_verticeCount[i], gltfSceneFileData.v_VBOdata[i], GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, fn_getVBOsizeFromPrimitiveType(0, NULL) * scene.v_verticeCount[i], gltfSceneFileData.v_VBOdata[i], GL_STATIC_DRAW);
 
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(S_VBO), (void*)0);
-                glEnableVertexAttribArray(0);
 
-                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(S_VBO), (void*)(sizeof(vec3)));
-                glEnableVertexAttribArray(1);
+                void* vertexOffset = (void*) 0;
+
+                glVertexAttribPointer(POSITION_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, fn_getVBOsizeFromPrimitiveType(0, NULL), vertexOffset);
+                glEnableVertexAttribArray(POSITION_VERTEX_BUFFER_LOCATION);
+                vertexOffset+=sizeof(vec3);
+
+                glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 2, GL_FLOAT, GL_FALSE, fn_getVBOsizeFromPrimitiveType(0, NULL), vertexOffset);
+                glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.v_EBO[i]);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * scene.v_indiceCount[i], gltfSceneFileData.v_EBOdata[i], GL_STATIC_DRAW);
 
+
+
+
+
+
+                // texture allocation
                 glBindTexture(GL_TEXTURE_2D, scene.v_TBO[i]);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                 i32 textureWidth, textureHeight;
                 i32 nrChannel;
-                void* textureData = stbi_load("model_3d/Cube Base Color.png", &textureWidth, &textureHeight, &nrChannel, 0);  // TODO : use getcwd to get the full path file
-                printf("nrChannel ptr =%d\n", textureHeight);
+                void* textureData = stbi_load(gltfSceneFileData.v_texturePath[i], &textureWidth, &textureHeight, &nrChannel, 0);  // TODO : use getcwd to get the full path file
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
                 glGenerateMipmap(GL_TEXTURE_2D);
                 stbi_image_free(textureData);
         }
 
         return scene;
+}
+
+size_t fn_getVBOsizeFromPrimitiveType(E_primitiveType primitiveType, E_error* p_error) // TODO :
+{
+        size_t returnValue = 20;
+        return returnValue;
 }

@@ -13,7 +13,8 @@
 #include <GLFW/glfw3.h>
 #include <yyjson.h>
 
-#include <stdio.h>     
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "error.h"
 #include "fn_state.h"

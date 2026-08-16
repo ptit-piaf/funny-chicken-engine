@@ -17,6 +17,8 @@ set(SOURCE src/main.c
         src/opengl_error.c
         src/mat.c
         src/file.c
+        src/opengl_render.c
+        src/shader.c
 )
 
 set(BIN funny)
@@ -27,4 +29,4 @@ if(DEBUG)
         set(CMAKE_C_FLAGS "-Wall -g -include /usr/include/HOL/HOL_standard.h")
 endif()
 
-target_link_libraries(${BIN} yyjson glfw glad m yyjson)
+target_link_libraries(${BIN} glfw glad m yyjson)

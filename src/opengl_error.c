@@ -8,7 +8,7 @@
 
 void fn_openGLErrorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, void* userParam)
 {
-        fprintf(openglErrorFStream, ANSI_RED_TEXT("openGL error [%s]")" : type = %s\n%s\n",
+        fprintf(g_openglErrorFStream, ANSI_RED_TEXT("openGL error [%s]")" : type = %s\n%s\n",
                 (severity == GL_DEBUG_SEVERITY_HIGH ? (severity == GL_DEBUG_SEVERITY_MEDIUM ? "GL_DEBUG_SEVERITY_MEDIUM" : "GL_DEBUG_SEVERITY_LOW" ) : "GL_DEBUG_SEVERITY_HIGH"),
                 fn_openGLErrorTypeName(type), message);
 }

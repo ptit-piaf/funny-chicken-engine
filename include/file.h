@@ -4,47 +4,13 @@
 #include <GL/glad.h>
 #include <cglm/cglm.h>
 
-typedef enum
-{
-        PRE_DEPTH_TEST = 1,
-        PRE_CLIP_FACE = (1<<2),
-        BASE_COLOR_TEXTURE = (1<<3),
+#include "render.h"
 
-        
-
-        MODEL_MAT_IN_VBO = (1<<16),  // NOTE : I still hate this name
-
-        ERROR_MODE = 0XFFFFFFFF
-} E_primitiveType;
 
 typedef enum
 {
-        NONE,
-        COMPLETE
+        tmp
 } E_gltfSceneFileDataAdvancement;
-
-typedef enum
-{
-        SUCCESS = 0,
-        NOT_VALID_URI = 1,
-        NOT_SUPPORTED = (1<<2),
-} E_uriToFileSystem;
-
-typedef struct
-{
-        GLuint* v_VBO;
-        GLuint* v_SSBO;
-        GLuint* v_TBO;
-        GLuint* v_EBO;
-        GLuint* v_VAO;
-
-        u32* v_verticeCount;
-        u32* v_indiceCount;
-        mat4** vv_modelMat;
-        u32 primitiveCount;
-
-        E_error error;
-} S_openGLscene; // TODO : I need to find a more appropriate header
 
 typedef struct S_gltfSceneFileData
 {
@@ -63,10 +29,15 @@ typedef struct S_gltfSceneFileData
         E_error error;
 } S_gltfSceneFileData;
 
+// WARNING : fn_uriToFileSystem and fn_getFileSystemSizeFromUri are horibly coded and should not be used on relative and never on absolute
+E_error fn_uriToFileSystem(char* uri, char* filePath);                  // File path can reach 512 char  WARNING : I prefer yuri than uri
+size_t fn_getFileSystemSizeFromUri(char* uri);                          // INFO : include \0 byte 
+char* fn_getDirPathFromFilePath(char* filePath);
+
 S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIndex);
-void fn_freeGltfFileData(S_gltfSceneFileData gltfSceneFileData); // TODO : maybe in wrong header
+void fn_freeGltfFileData(S_gltfSceneFileData gltfSceneFileData);
 void fn_printGltfFileData(S_gltfSceneFileData gltfSceneFileData);
 S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFileData);
-E_uriToFileSystem fn_uriToFileSystem(char* uri, char* filePath); // File path can reach 512 char  WARNING : I prefer yuri than uri
+size_t fn_getVBOsizeFromPrimitiveType(E_primitiveType primitiveType, E_error* p_error); // TODO : change the header
 
 #endif

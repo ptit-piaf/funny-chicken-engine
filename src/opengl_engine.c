@@ -191,26 +191,15 @@ E_main fn_openGLEngineLoop()
 
 
                 // INFO : Rendering
-                mat4 projectionViewMat;
-                glm_mat4_mul(projectionMat, viewMat, projectionViewMat);
+                glm_mat4_mul(projectionMat, viewMat, scene.projectionViewMat);
+                scene.v_shader = &shaderProgram;
 
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionViewMat"), 1, GL_FALSE, *projectionViewMat);
-                /*mat4 modelMat = GLM_MAT4_IDENTITY_INIT;
-                glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, *modelMat);*/
-
-                glUseProgram(shaderProgram);
-                for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
-                {
-                        glBindTexture(GL_TEXTURE_2D, scene.v_TBO[i]);
-                        glBindVertexArray(scene.v_VAO[i]);
-                        glDrawElements(GL_TRIANGLES, gltfSceneFileData.v_indiceCount[i], GL_UNSIGNED_INT, NULL);
-                }
+                fn_openGLrender(scene);
 
                 glfwSwapBuffers(window);
                 glfwPollEvents();
         }
-
+        fn_freeOpenGLscene(scene);
         glDeleteProgram(shaderProgram);
 
 GO_END_WINDOW:
