@@ -141,7 +141,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
 
                 for(u32 j=0; j<vp_sceneMesh[i]->primitives_count; j++)
                 {
-                        gltfSceneFileData.v_primitiveType[primitiveIndex] = 0;  // TODO : find the best default primitive type
+                        gltfSceneFileData.v_primitiveType[primitiveIndex] = VERTEX_INDICE;  // TODO : find the best default primitive type
                         if(vp_sceneMesh[i]->primitives[j].extras.data)
                         {
                                 yyjson_doc* jsonDoc = yyjson_read(vp_sceneMesh[i]->extras.data, strlen(vp_sceneMesh[i]->extras.data), 0);
@@ -291,8 +291,8 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
         scene.primitiveCount = gltfSceneFileData.primitiveCount;
 
         glGenBuffers(gltfSceneFileData.primitiveCount, scene.v_VBO);
-        glGenBuffers(gltfSceneFileData.primitiveCount, scene.v_EBO);
-        glGenTextures(gltfSceneFileData.primitiveCount, scene.v_TBO); // WARNING : unoptimise
+        //glGenBuffers(gltfSceneFileData.primitiveCount, scene.v_EBO);
+        //glGenTextures(gltfSceneFileData.primitiveCount, scene.v_TBO);
 
 
         for(u32 i=0; i<gltfSceneFileData.primitiveCount; i++)
@@ -302,6 +302,7 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
         {
                 scene.v_verticeCount[i] = gltfSceneFileData.v_verticeCount[i];
                 scene.v_indiceCount[i] = gltfSceneFileData.v_indiceCount[i];
+                scene.v_primitiveType[i] = gltfSceneFileData.v_primitiveType[i];
 
                 glBindVertexArray(scene.v_VAO[i]);
 
@@ -339,6 +340,57 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
                 glGenerateMipmap(GL_TEXTURE_2D);
                 stbi_image_free(textureData);
+
+
+                glBindVertexArray(scene.v_VAO[i]);
+
+                void* vertexOffset = (void*) 0;
+                size_t VBOstride = fn_getVBOstride(scene.v_primitiveType[i]);
+
+                glBindBuffer(GL_ARRAY_BUFFER, scene.v_VBO[i]);
+                glBufferData(GL_ARRAY_BUFFER, scene.v_verticeCount[i], gltfSceneFileData.v_VBOdata[i], GL_STATIC_DRAW);
+
+                glVertexAttribPointer(POSITION_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
+                glEnableVertexAttribArray(POSITION_VERTEX_BUFFER_LOCATION);
+
+                vertexOffset += sizeof(vec3);
+
+                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_TEXTURE_COORD)
+                {
+                        glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 2, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
+                        glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
+
+                        vertexOffset += sizeof(vec2);
+                }
+                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_NORMAL)
+                {
+                        glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
+                        glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
+
+                        vertexOffset += sizeof(vec2);
+                }
+                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_COLOR)
+                {
+                        glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
+                        glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
+
+                        vertexOffset += sizeof(vec2);
+                }
+                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_INDICE)
+                {
+                        glGenBuffers(1, &scene.v_EBO[i]);
+                        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.v_EBO[i]);
+                        glBufferData(GL_ELEMENT_ARRAY_BUFFER, scene.v_indiceCount[i], gltfSceneFileData.v_EBOdata[i], GL_STATIC_DRAW);
+                }
+                else
+                        scene.v_EBO[i] = 0;
+
+                if(gltfSceneFileData.v_primitiveType[i] & BASE_COLOR_TEXTURE)
+                else
+
+
+
+
         }
 
         return scene;

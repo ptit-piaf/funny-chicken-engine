@@ -1,3 +1,4 @@
+#include <GL/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
@@ -28,33 +29,26 @@ void fn_freeOpenGLscene(S_openGLscene scene)
 {
         switch(scene.advancement)
         {
-                case ADVANCEMENT_SUCCESS:
+                case ADVANCEMENT_COMPLETE:
 
-                        glDeleteBuffers(primitiveCount, scene.v_VBO);
-                        glDeleteBuffers(primitiveCount, scene.v_UBO);
-                        glDeleteVertexArrays(primitiveCount, scene.v_VAO);
                         GLuint lastVBO = 0;
                         GLuint lastUBO = 0;
                         GLuint lastVAO = 0;
-                        for(u32 i=0; i<primitiveCount; i++)
+                        for(u32 i=0; i<scene.primitiveCount; i++)
                         {
-                                if(scene.v_VBO != lastVBO)
-                                        glDeleteBuffers(1, &scene.v_VBO);
-                                if(scene.v_UBO != lastUBO)
-                                        glDeleteBuffers(1, &scene.v_UBO);
-                                if(scene.v_VAO != lastVAO)
-                                        glDeleteVertexArrays(1, &scene.v_VAO);
+                                glDeleteBuffers(1, &scene.v_VBO[i]);
+                                glDeleteVertexArrays(1, &scene.v_VAO[i]);
                         }
 
-                        free(v_VBO);
-                        free(v_VAO);
-                        free(v_SSBO);
-                        free(v_TBO);
-                        free(v_EBO);
-                        free(v_shader);
-                        free(v_verticeCount);
-                        free(v_indiceCount);
-                        free(vv_modelMat);
+                        free(scene.v_VBO);
+                        free(scene.v_VAO);
+                        free(scene.v_SSBO);
+                        free(scene.v_TBO);
+                        free(scene.v_EBO);
+                        free(scene.v_shader);
+                        free(scene.v_verticeCount);
+                        free(scene.v_indiceCount);
+                        free(scene.vv_modelMat);
 
                 case ADVANCEMENT_NULL:
         }

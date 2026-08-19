@@ -25,6 +25,7 @@
         * TODO : A prepossesor option to choose between Opengl Vulkan or both
         * TODO : Manage main argument
         * TODO : Create some global variable to manage text output
+        * TODO : Implement vulkan
 
         * WARNING : some functionnality are posix only
 */

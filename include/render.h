@@ -26,6 +26,7 @@ typedef struct
 
         u32* v_verticeCount;
         u32* v_indiceCount;
+        E_primitiveType* v_primitiveType;
         mat4** vv_modelMat;
 
         mat4 projectionViewMat;
@@ -38,9 +39,14 @@ typedef struct
 typedef enum
 {
         PRE_DEPTH_TEST =                (1LL<<0),
-        PRE_CLIP_FACE =                 (1LL<<2),
+        PRE_CLIP_FACE =                 (1LL<<1),
+        VERTEX_INDICE =                 (1LL<<2),
 
-        BASE_COLOR_TEXTURE =            (1LL<<3),
+        VERTEX_TEXTURE_COORD =          (1LL<<3),
+        VERTEX_NORMAL =                 (1LL<<4),
+        VERTEX_COLOR =                  (1LL<<5),
+
+        BASE_COLOR_TEXTURE =            (1LL<<10),
 
         UV_MISSING =                    (1LL<<30),
         BASE_COLOR_TEXTURE_MISSING =    (1LL<<31),
