@@ -8,3 +8,4 @@
 !*.frag
 !README.md
 !model_3d/*
+!makefile
