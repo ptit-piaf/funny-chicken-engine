@@ -4,10 +4,67 @@
 #include <GL/glad.h>
 #include <cglm/cglm.h>
 
+#include <stdint.h>
+
 typedef enum
 {
         TMP,
 } E_openGLsceneAdvancement;
+
+typedef enum
+{
+        PRE_DEPTH_TEST =                UINT64_C(1)<<0,
+        PRE_CLIP_FACE =                 UINT64_C(1)<<1,
+        VERTEX_INDICE =                 UINT64_C(1)<<2,
+
+        VERTEX_TEXTURE_COORD =          UINT64_C(1)<<3,
+        VERTEX_NORMAL =                 UINT64_C(1)<<4,
+        VERTEX_COLOR =                  UINT64_C(1)<<5,
+
+        BASE_COLOR_TEXTURE =            UINT64_C(1)<<10,
+
+        UV_MISSING =                    UINT64_C(1)<<30,
+        BASE_COLOR_TEXTURE_MISSING =    UINT64_C(1)<<31,
+
+        MODEL_MAT_IN_VBO =              UINT64_C(1)<<32,                // NOTE : I still hate this name
+
+        // render mode 48
+        POINTS =                        (u64)GL_POINTS                     <<48,
+        LINE_STRIP =                    (u64)GL_LINE_STRIP                 <<48,
+        LINE_LOOP =                     (u64)GL_LINE_LOOP                  <<48,
+        LINES =                         (u64)GL_LINES                      <<48,
+        LINE_STRIP_ADJACENCY =          (u64)GL_LINE_STRIP_ADJACENCY       <<48,
+        LINES_ADJACENCY =               (u64)GL_LINES_ADJACENCY            <<48,
+        TRIANGLE_STRIP =                (u64)GL_TRIANGLE_STRIP             <<48,
+        TRIANGLE_FAN =                  (u64)GL_TRIANGLE_FAN               <<48,
+        TRIANGLES =                     (u64)GL_TRIANGLES                  <<48,
+        TRIANGLE_STRIP_ADJACENCY =      (u64)GL_TRIANGLE_STRIP_ADJACENCY   <<48,
+        TRIANGLES_ADJACENCY =           (u64)GL_TRIANGLES_ADJACENCY        <<48,
+        PATCHES =                       (u64)GL_PATCHES                    <<48,
+
+
+        // error 56
+        PRIMITVE_ERROR =                UINT64_C(1)<<62,
+        PRIMITVE_FATAL_ERROR =          UINT64_C(1)<<63,
+
+        PRIMITIVE_TYPE_MAX =            UINT64_C(0XFFFFFFFFFFFFFFFF)    // INFO : 64 bit enum
+} E_primitiveType;
+
+typedef union
+{
+        E_primitiveType a;
+        struct
+        {
+                u8 b1;
+                u8 b2;
+                u8 b3;
+                u8 b4;
+                u8 b5;
+                u8 b6;
+                u8 renderMode;
+                u8 error;
+        }
+} U_primitiveType;
 
 typedef struct
 {
@@ -26,7 +83,7 @@ typedef struct
 
         u32* v_verticeCount;
         u32* v_indiceCount;
-        E_primitiveType* v_primitiveType;
+        U_primitiveType* v_primitiveType;
         mat4** vv_modelMat;
 
         mat4 projectionViewMat;
@@ -35,29 +92,6 @@ typedef struct
         E_openGLsceneAdvancement advancement;
         E_error error;
 } S_openGLscene;
-
-typedef enum
-{
-        PRE_DEPTH_TEST =                (1LL<<0),
-        PRE_CLIP_FACE =                 (1LL<<1),
-        VERTEX_INDICE =                 (1LL<<2),
-
-        VERTEX_TEXTURE_COORD =          (1LL<<3),
-        VERTEX_NORMAL =                 (1LL<<4),
-        VERTEX_COLOR =                  (1LL<<5),
-
-        BASE_COLOR_TEXTURE =            (1LL<<10),
-
-        UV_MISSING =                    (1LL<<30),
-        BASE_COLOR_TEXTURE_MISSING =    (1LL<<31),
-
-        MODEL_MAT_IN_VBO =              (1LL<<32),                // NOTE : I still hate this name
-
-        PRIMITVE_ERROR =                (1LL<<62),
-        PRIMITVE_FATAL_ERROR =          (1LL<<63),
-
-        PRIMITIVE_TYPE_MAX =            0XFFFFFFFFFFFFFFFFLL    // INFO : 64 bit enum
-} E_primitiveType;
 
 E_error fn_openGLrender(S_openGLscene scene);
 void fn_freeOpenGLscene(S_openGLscene scene);

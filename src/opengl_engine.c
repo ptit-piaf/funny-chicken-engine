@@ -55,7 +55,7 @@ E_main fn_openGLEngineLoop()
 
 
         mat4 projectionMat = GLM_MAT4_IDENTITY_INIT;
-        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.0001f, 1000.0f, projectionMat);
+        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.1f, 1000.0f, projectionMat);
 
         mat4 viewMat = GLM_MAT4_IDENTITY_INIT;
 

@@ -13,6 +13,7 @@
 #include "render.h"
 #include "shader.h"
 #include "math3d.h"
+#include "context.h"
 
 S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIndex)
 {
@@ -124,7 +125,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
 
 
                 // TODO : implemente other extra variable (only if necessary)
-                E_primitiveType meshType = MODEL_MAT_IN_VBO; // TODO : find the best default mesh type
+                E_primitiveType meshType = 0;
                 if(vp_sceneMesh[i]->extras.data)
                 {
                         yyjson_doc* jsonDoc = yyjson_read(vp_sceneMesh[i]->extras.data, strlen(vp_sceneMesh[i]->extras.data), 0);
@@ -141,7 +142,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
 
                 for(u32 j=0; j<vp_sceneMesh[i]->primitives_count; j++)
                 {
-                        gltfSceneFileData.v_primitiveType[primitiveIndex] = VERTEX_INDICE;  // TODO : find the best default primitive type
+                        gltfSceneFileData.v_primitiveType[primitiveIndex].a = meshType;  // TODO : find the best default primitive type
                         if(vp_sceneMesh[i]->primitives[j].extras.data)
                         {
                                 yyjson_doc* jsonDoc = yyjson_read(vp_sceneMesh[i]->extras.data, strlen(vp_sceneMesh[i]->extras.data), 0);
@@ -151,11 +152,14 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                                 if((jsonProp->tag & YYJSON_TYPE_NUM) &&
                                         !(jsonProp->tag & (YYJSON_SUBTYPE_UINT|0xFF)) && // INFO : YYJSON_SUBTYPE_UINT is a weard macro see yyjson
                                         jsonProp)
-                                        gltfSceneFileData.v_primitiveType[primitiveIndex] = (int)yyjson_get_int(jsonProp);
+                                        gltfSceneFileData.v_primitiveType[primitiveIndex].a |= (int)yyjson_get_int(jsonProp); // WARNING : this line suppose that the property define by th mesh are supperior and always true
 
                                 yyjson_doc_free(jsonDoc);
                         }
-                        gltfSceneFileData.v_primitiveType[primitiveIndex] |= meshType;
+                        else
+                        {
+                                
+                        }
 
                         cgltf_attribute positionAttribute = {0};
                         cgltf_attribute normalAttribute = {0};
@@ -173,12 +177,12 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
 
                         if(!positionAttribute.data)
                         {
-                                gltfSceneFileData.v_primitiveType[primitiveIndex] |= PRIMITVE_FATAL_ERROR;
+                                gltfSceneFileData.v_primitiveType[primitiveIndex].a |= PRIMITVE_FATAL_ERROR;
                                 continue;
                         }
 
-                        if(!uvAttribute.data && gltfSceneFileData.v_primitiveType[primitiveIndex] & BASE_COLOR_TEXTURE)
-                                gltfSceneFileData.v_primitiveType[primitiveIndex] |= UV_MISSING | PRIMITVE_ERROR; // WARNING : see include/file.h
+                        if(!uvAttribute.data && gltfSceneFileData.v_primitiveType[primitiveIndex].a & BASE_COLOR_TEXTURE)
+                                gltfSceneFileData.v_primitiveType[primitiveIndex].a |= UV_MISSING | PRIMITVE_ERROR; // WARNING : see include/file.h
 
 
                         gltfSceneFileData.v_verticeCount[primitiveIndex] = positionAttribute.data->count;
@@ -203,7 +207,7 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                         {
                                 free(gltfSceneFileData.v_texturePath[primitiveIndex]);
                                 gltfSceneFileData.v_texturePath[primitiveIndex] = NULL;
-                                gltfSceneFileData.v_primitiveType[primitiveIndex] |= BASE_COLOR_TEXTURE_MISSING | PRIMITVE_ERROR;
+                                gltfSceneFileData.v_primitiveType[primitiveIndex].a |= BASE_COLOR_TEXTURE_MISSING | PRIMITVE_ERROR;
                         }
                         primitiveIndex++;
                 }
@@ -289,6 +293,7 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
         scene.v_indiceCount = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
         scene.v_TBO = malloc(sizeof(GLuint) * gltfSceneFileData.primitiveCount);
         scene.primitiveCount = gltfSceneFileData.primitiveCount;
+        scene.v_primitiveType = malloc(sizeof(E_primitiveType) * gltfSceneFileData.primitiveCount);
 
         glGenBuffers(gltfSceneFileData.primitiveCount, scene.v_VBO);
         //glGenBuffers(gltfSceneFileData.primitiveCount, scene.v_EBO);
@@ -302,93 +307,67 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
         {
                 scene.v_verticeCount[i] = gltfSceneFileData.v_verticeCount[i];
                 scene.v_indiceCount[i] = gltfSceneFileData.v_indiceCount[i];
-                scene.v_primitiveType[i] = gltfSceneFileData.v_primitiveType[i];
-
-                glBindVertexArray(scene.v_VAO[i]);
-
-                // VBO allocation
-                glBindBuffer(GL_ARRAY_BUFFER, scene.v_VBO[i]);
-                glBufferData(GL_ARRAY_BUFFER, fn_getVBOsizeFromPrimitiveType(0, NULL) * scene.v_verticeCount[i], gltfSceneFileData.v_VBOdata[i], GL_STATIC_DRAW);
-
-
-                void* vertexOffset = (void*) 0;
-
-                glVertexAttribPointer(POSITION_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, fn_getVBOsizeFromPrimitiveType(0, NULL), vertexOffset);
-                glEnableVertexAttribArray(POSITION_VERTEX_BUFFER_LOCATION);
-                vertexOffset+=sizeof(vec3);
-
-                glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 2, GL_FLOAT, GL_FALSE, fn_getVBOsizeFromPrimitiveType(0, NULL), vertexOffset);
-                glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
-
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.v_EBO[i]);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * scene.v_indiceCount[i], gltfSceneFileData.v_EBOdata[i], GL_STATIC_DRAW);
-
-
-
-
-
-
-                // texture allocation
-                glBindTexture(GL_TEXTURE_2D, scene.v_TBO[i]);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                i32 textureWidth, textureHeight;
-                i32 nrChannel;
-                void* textureData = stbi_load(gltfSceneFileData.v_texturePath[i], &textureWidth, &textureHeight, &nrChannel, 0);  // TODO : use getcwd to get the full path file
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
-                glGenerateMipmap(GL_TEXTURE_2D);
-                stbi_image_free(textureData);
-
+                scene.v_primitiveType[i].a = gltfSceneFileData.v_primitiveType[i].a;
 
                 glBindVertexArray(scene.v_VAO[i]);
 
                 void* vertexOffset = (void*) 0;
-                size_t VBOstride = fn_getVBOstride(scene.v_primitiveType[i]);
+                size_t VBOstride = fn_getVBOstride(scene.v_primitiveType[i].a);
 
                 glBindBuffer(GL_ARRAY_BUFFER, scene.v_VBO[i]);
-                glBufferData(GL_ARRAY_BUFFER, scene.v_verticeCount[i], gltfSceneFileData.v_VBOdata[i], GL_STATIC_DRAW);
+                printf("vbo = %d\n", scene.v_verticeCount[i]);
+                glBufferData(GL_ARRAY_BUFFER, scene.v_verticeCount[i] * VBOstride, gltfSceneFileData.v_VBOdata[i], GL_STATIC_DRAW);
 
                 glVertexAttribPointer(POSITION_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
                 glEnableVertexAttribArray(POSITION_VERTEX_BUFFER_LOCATION);
 
                 vertexOffset += sizeof(vec3);
 
-                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_TEXTURE_COORD)
+                if(gltfSceneFileData.v_primitiveType[i].a & VERTEX_TEXTURE_COORD)
                 {
                         glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 2, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
                         glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
 
                         vertexOffset += sizeof(vec2);
                 }
-                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_NORMAL)
+                if(gltfSceneFileData.v_primitiveType[i].a & VERTEX_NORMAL)
                 {
                         glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
                         glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
 
                         vertexOffset += sizeof(vec2);
                 }
-                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_COLOR)
+                if(gltfSceneFileData.v_primitiveType[i].a & VERTEX_COLOR)
                 {
                         glVertexAttribPointer(TEXTURE_COORD_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
                         glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
 
                         vertexOffset += sizeof(vec2);
                 }
-                if(gltfSceneFileData.v_primitiveType[i] & VERTEX_INDICE)
+                if(gltfSceneFileData.v_primitiveType[i].a & VERTEX_INDICE)
                 {
                         glGenBuffers(1, &scene.v_EBO[i]);
                         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.v_EBO[i]);
-                        glBufferData(GL_ELEMENT_ARRAY_BUFFER, scene.v_indiceCount[i], gltfSceneFileData.v_EBOdata[i], GL_STATIC_DRAW);
+                        glBufferData(GL_ELEMENT_ARRAY_BUFFER, scene.v_indiceCount[i] * sizeof(u32), gltfSceneFileData.v_EBOdata[i], GL_STATIC_DRAW);
                 }
                 else
                         scene.v_EBO[i] = 0;
 
-                if(gltfSceneFileData.v_primitiveType[i] & BASE_COLOR_TEXTURE)
-                else
-
-
+                if(gltfSceneFileData.v_primitiveType[i].a & BASE_COLOR_TEXTURE)   // TODO : create a way to custom texture creation
+                {
+                        glBindTexture(GL_TEXTURE_2D, scene.v_TBO[i]);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                        i32 textureWidth, textureHeight;
+                        i32 nrChannel;
+                        void* textureData = stbi_load(gltfSceneFileData.v_texturePath[i], &textureWidth, &textureHeight, &nrChannel, 0);
+                        GLint pixelFormat = nrChannel==3 ? GL_RGB : GL_RGBA;  // INFO : do not include format like GL_BGR and 10bit color
+                        glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, textureWidth, textureHeight, 0, pixelFormat, GL_UNSIGNED_BYTE, textureData);
+                        glGenerateMipmap(GL_TEXTURE_2D);
+                        stbi_image_free(textureData);
+                }
 
 
         }

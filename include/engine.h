@@ -7,6 +7,4 @@
 
 E_main fn_openGLEngineLoop();
 
-GLFWwindow* fn_createOpenglWindow();
-
 #endif

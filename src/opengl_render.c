@@ -15,11 +15,21 @@ E_error fn_openGLrender(S_openGLscene scene)
 
         for(u32 i=0; i<scene.primitiveCount; i++)
         {
+                if(scene.v_primitiveType[i].a & PRIMITVE_FATAL_ERROR)
+                        continue;
+
                 glUseProgram(scene.v_shader[i]);
                 glBindVertexArray(scene.v_VAO[i]);
-                if(scene.v_TBO[i])
+
+                if(scene.v_primitiveType[i].a & BASE_COLOR_TEXTURE)
                         glBindTexture(GL_TEXTURE_2D, scene.v_TBO[i]);
-                glDrawElements(GL_TRIANGLES, scene.v_indiceCount[i], GL_UNSIGNED_INT, NULL);
+
+
+                // glDraw
+                if(scene.v_primitiveType[i].a & VERTEX_INDICE)
+                        glDrawElements(scene.v_primitiveType[i].renderMode, scene.v_indiceCount[i], GL_UNSIGNED_INT, NULL);
+                else
+                        glDrawArrays(scene.v_primitiveType[i].renderMode, 0, scene.v_indiceCount[i]);
         }
 
         return returnValue;

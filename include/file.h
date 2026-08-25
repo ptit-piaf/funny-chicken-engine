@@ -22,7 +22,7 @@ typedef struct S_gltfSceneFileData
         u32* v_verticeCount;
         u32* v_indiceCount;
 
-        E_primitiveType* v_primitiveType;
+        U_primitiveType* v_primitiveType;
         u32 primitiveCount;
 
         E_gltfSceneFileDataAdvancement advancement;
