@@ -1,15 +1,15 @@
-#define HOL_IMPLEMENTATION
-#include <HOL/HOL.h>
-
 #define CGLTF_IMPLEMENTATION
 #include <cgltf/cgltf.h>
+
+#define HOL_IMPLEMENTATION
+#include <HOL/HOL_standard.h>
 
 //considere the nuklear lib
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <GL/glad.h>
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <yyjson.h>
 
@@ -22,13 +22,19 @@
 #include "global_variable.h"
 
 /*
+ * INFO : MUST
         * TODO : A prepossesor option to choose between Opengl Vulkan or both
         * TODO : Manage main argument
         * TODO : Create some global variable to manage text output
-        * TODO : Implement config file (optionnal)
         * TODO : Implement vulkan
 
+ * INFO : OPTIONNAL
+        * TODO : Implement config file
+        * TODO : Improve primitive type. It may not be flexible enought.
+
         * WARNING : some functionnality are posix only
+        * WARNING : review HOL uri function
+        * WARNING : vertex allocation for all the vertex attribute should be always be in the same order
 */
 
 i32 main(i32 argc, char** v_argv)

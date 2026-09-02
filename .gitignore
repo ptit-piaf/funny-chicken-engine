@@ -9,3 +9,5 @@
 !README.md
 !model_3d/*
 !makefile
+!shader/*.vert
+!shader/*.frag

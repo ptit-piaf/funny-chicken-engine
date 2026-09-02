@@ -1,7 +1,7 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-#include <GL/glad.h>
+#include "glad/glad.h"
 #include <cglm/cglm.h>
 
 #include <stdint.h>
@@ -13,18 +13,17 @@ typedef enum
 
 typedef enum
 {
-        PRE_DEPTH_TEST =                UINT64_C(1)<<0,
-        PRE_CLIP_FACE =                 UINT64_C(1)<<1,
-        VERTEX_INDICE =                 UINT64_C(1)<<2,
+        // TODO : remove those 3(the sorting should do the work)
+        PRE_DEPTH_TEST =                UINT64_C(1)<<0, // 1
+        PRE_CLIP_FACE =                 UINT64_C(1)<<1, // 2
+        VERTEX_INDICE =                 UINT64_C(1)<<2, // 4
 
-        VERTEX_TEXTURE_COORD =          UINT64_C(1)<<3,
-        VERTEX_NORMAL =                 UINT64_C(1)<<4,
-        VERTEX_COLOR =                  UINT64_C(1)<<5,
+        VERTEX_TEXTURE_COORD =          UINT64_C(1)<<3, // 8
+        VERTEX_NORMAL =                 UINT64_C(1)<<4, // 10
+        VERTEX_COLOR =                  UINT64_C(1)<<5, // 20
+        VERTEX_POSITION =               UINT64_C(1)<<6, // 40
 
         BASE_COLOR_TEXTURE =            UINT64_C(1)<<10,
-
-        UV_MISSING =                    UINT64_C(1)<<30,
-        BASE_COLOR_TEXTURE_MISSING =    UINT64_C(1)<<31,
 
         MODEL_MAT_IN_VBO =              UINT64_C(1)<<32,                // NOTE : I still hate this name
 
@@ -44,6 +43,9 @@ typedef enum
 
 
         // error 56
+        UV_MISSING =                    UINT64_C(1)<<56,
+        BASE_COLOR_TEXTURE_MISSING =    UINT64_C(1)<<57,
+
         PRIMITVE_ERROR =                UINT64_C(1)<<62,
         PRIMITVE_FATAL_ERROR =          UINT64_C(1)<<63,
 
@@ -63,7 +65,7 @@ typedef union
                 u8 b6;
                 u8 renderMode;
                 u8 error;
-        }
+        };
 } U_primitiveType;
 
 typedef struct
@@ -79,6 +81,8 @@ typedef struct
         GLuint* v_SSBO;
         GLuint* v_TBO;
         GLuint* v_EBO;
+        u32* v_shaderIndex;
+
         GLuint* v_shader;
 
         u32* v_verticeCount;

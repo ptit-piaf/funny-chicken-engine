@@ -1,7 +1,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <GL/glad.h>
+#include "glad/glad.h"
 
 // INFO : v_shader buffers index
 #define DEFAULT_SHADER_INDEX 0
@@ -17,5 +17,7 @@
 
 GLuint fn_compileOpenglShader(const char* shaderPath, GLenum shaderType);
 GLuint fn_createOpenglShaderProgram(GLuint* v_shader, u32 shaderCount);
+
+GLuint* fn_getOpenGLshaderDefault();
 
 #endif

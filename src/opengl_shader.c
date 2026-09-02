@@ -1,4 +1,4 @@
-#include <GL/glad.h>
+#include "glad/glad.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +36,8 @@ GLuint fn_createOpenglShaderProgram(GLuint* v_shader, u32 shaderCount)
 {
         GLuint shaderProgram = glCreateProgram();
 
-        REPEAT(glAttachShader(shaderProgram, v_shader[_]), shaderCount);
+        for(u32 i=0; i<shaderCount; i++)
+                glAttachShader(shaderProgram, v_shader[i]);
         glLinkProgram(shaderProgram);
 
         GLint result;
@@ -49,6 +50,8 @@ GLuint fn_createOpenglShaderProgram(GLuint* v_shader, u32 shaderCount)
                 shaderProgram = 0;
         }
 
-        REPEAT(glDeleteShader(v_shader[_]), shaderCount);
+        for(u32 i=0; i<shaderCount; i++)
+                glDeleteShader(v_shader[i]);
+
         return shaderProgram;
 }

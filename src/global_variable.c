@@ -8,6 +8,6 @@ FILE* g_openglErrorFStream;
 void fn_manageMainArg()
 {
         g_eventFStream = fopen("event.data", "w");
-        g_openglErrorFStream = fopen("opengl_error.txt", "w");
+        g_openglErrorFStream = stderr;
         return;
 }

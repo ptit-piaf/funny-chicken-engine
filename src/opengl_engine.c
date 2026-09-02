@@ -1,4 +1,4 @@
-#include <GL/glad.h>
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
 #include <stb_image.h>
@@ -14,6 +14,7 @@
 #include "file.h"
 #include "error.h"
 #include "math3d.h"
+#include "context.h"
 
 E_main fn_openGLEngineLoop()
 {
@@ -41,7 +42,8 @@ E_main fn_openGLEngineLoop()
         glViewport(0, 0, event.windowWidth, event.windowHeight);
 
 
-        S_gltfSceneFileData gltfSceneFileData = fn_loadGltfSceneFileFormat("model_3d/Untitled.gltf", 0);
+        //S_gltfSceneFileData gltfSceneFileData = fn_loadGltfSceneFileFormat("model_3d/Untitled.gltf", 0);
+        S_gltfSceneFileData gltfSceneFileData = fn_loadGltfSceneFileFormat("cube.gltf", 0);
         if(gltfSceneFileData.error != HOLY_SUCCESS)
         {
                 fprintf(stderr, "3D scene loading failed.\n");
@@ -116,14 +118,23 @@ E_main fn_openGLEngineLoop()
 
 
         glEnable(GL_DEPTH_TEST);
-
+        GLuint shaderProgram[2];
         GLuint vertexShader, fragmentShader;
-        vertexShader = fn_compileOpenglShader("test.vert", GL_VERTEX_SHADER);
-        fragmentShader = fn_compileOpenglShader("test.frag", GL_FRAGMENT_SHADER);
 
-        GLuint shaderProgram = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
+        printf(ANSI_GREEN_TEXT("shader/base.vert")"\n");
+        vertexShader = fn_compileOpenglShader("shader/base.vert", GL_VERTEX_SHADER);
+        printf(ANSI_GREEN_TEXT("shader/base.frag\n")"\n");
+        fragmentShader = fn_compileOpenglShader("shader/base.frag", GL_FRAGMENT_SHADER);
+        printf("notnotnot\n");
+        shaderProgram[1] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
-        GLuint matrixLocation = glGetUniformLocation(shaderProgram, "modelMat");
+
+        printf(ANSI_GREEN_TEXT("shader/base_color_texture.vert\n")"\n");
+        vertexShader = fn_compileOpenglShader("shader/base_color_texture.vert", GL_VERTEX_SHADER);
+        printf(ANSI_GREEN_TEXT("shader/base_color_texture.frag\n")"\n");
+        fragmentShader = fn_compileOpenglShader("shader/base_color_texture.frag", GL_FRAGMENT_SHADER);
+
+        shaderProgram[0] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
         glfwSwapInterval(1);
 
@@ -165,7 +176,7 @@ E_main fn_openGLEngineLoop()
                 }
                 if(event.type & EVENT_WINDOW_SIZE)
                 {
-                        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.00001f, 1000.0f, projectionMat);
+                        glm_perspective(M_PI_2, (float)event.windowWidth/(float)event.windowHeight, 0.1f, 1000.0f, projectionMat);
                         glViewport(0, 0, event.windowWidth, event.windowHeight);
                 }
                 if(event.type & EVENT_MOUSE_POS)
@@ -192,15 +203,18 @@ E_main fn_openGLEngineLoop()
 
                 // INFO : Rendering
                 glm_mat4_mul(projectionMat, viewMat, scene.projectionViewMat);
-                scene.v_shader = &shaderProgram;
+                scene.v_shader = shaderProgram;
+
 
                 fn_openGLrender(scene);
 
                 glfwSwapBuffers(window);
                 glfwPollEvents();
         }
+
         fn_freeOpenGLscene(scene);
-        glDeleteProgram(shaderProgram);
+        glDeleteProgram(shaderProgram[0]);
+        glDeleteProgram(shaderProgram[1]);
 
 GO_END_WINDOW:
         glfwDestroyWindow(window);
