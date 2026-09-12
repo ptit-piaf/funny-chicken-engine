@@ -118,6 +118,7 @@ E_main fn_openGLEngineLoop()
 
 
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
         GLuint shaderProgram[2];
         GLuint vertexShader, fragmentShader;
 
@@ -126,7 +127,7 @@ E_main fn_openGLEngineLoop()
         printf(ANSI_GREEN_TEXT("shader/base.frag\n")"\n");
         fragmentShader = fn_compileOpenglShader("shader/base.frag", GL_FRAGMENT_SHADER);
         printf("notnotnot\n");
-        shaderProgram[1] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
+        shaderProgram[0] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
 
         printf(ANSI_GREEN_TEXT("shader/base_color_texture.vert\n")"\n");
@@ -134,7 +135,7 @@ E_main fn_openGLEngineLoop()
         printf(ANSI_GREEN_TEXT("shader/base_color_texture.frag\n")"\n");
         fragmentShader = fn_compileOpenglShader("shader/base_color_texture.frag", GL_FRAGMENT_SHADER);
 
-        shaderProgram[0] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
+        shaderProgram[1] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
         glfwSwapInterval(1);
 
@@ -144,7 +145,7 @@ E_main fn_openGLEngineLoop()
         vec3 position = {0.0f, 0.0f, 0.0f};
 
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glClearColor(0.0, 1.0, 0.0, 0.0);
+        glClearColor(0.2, 0.2, 0.2, 0.0);
         bool running = true;
         while(running)
         {
@@ -168,6 +169,11 @@ E_main fn_openGLEngineLoop()
                         position[0] -= cos(xRotation)*0.01;
                         position[2] -= sin(xRotation)*0.01;
                 }
+                if(glfwGetKey(window, GLFW_KEY_SPACE))
+                        position[Y] += 0.01;
+                if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL))
+                        position[Y] -= 0.01;
+
 
                 // INFO : event handling
                 if(event.type & EVENT_QUIT)

@@ -16,7 +16,7 @@ size_t fn_getVBOstride(E_primitiveType primitiveType)
         if(primitiveType & VERTEX_NORMAL)
                 returnValue += sizeof(vec3);
         if(primitiveType & VERTEX_COLOR)
-                returnValue += sizeof(vec3);
+                returnValue += sizeof(vec4);
 
 
         return returnValue;

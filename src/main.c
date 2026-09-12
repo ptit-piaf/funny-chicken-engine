@@ -35,6 +35,7 @@
         * WARNING : some functionnality are posix only
         * WARNING : review HOL uri function
         * WARNING : vertex allocation for all the vertex attribute should be always be in the same order
+        * WARNING : The code only handle vec4 vertex color
 */
 
 i32 main(i32 argc, char** v_argv)

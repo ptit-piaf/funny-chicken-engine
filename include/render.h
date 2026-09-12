@@ -18,10 +18,10 @@ typedef enum
         PRE_CLIP_FACE =                 UINT64_C(1)<<1, // 2
         VERTEX_INDICE =                 UINT64_C(1)<<2, // 4
 
-        VERTEX_TEXTURE_COORD =          UINT64_C(1)<<3, // 8
-        VERTEX_NORMAL =                 UINT64_C(1)<<4, // 10
-        VERTEX_COLOR =                  UINT64_C(1)<<5, // 20
-        VERTEX_POSITION =               UINT64_C(1)<<6, // 40
+        VERTEX_POSITION =               UINT64_C(1)<<3, // 8
+        VERTEX_TEXTURE_COORD =          UINT64_C(1)<<4, // 10
+        VERTEX_NORMAL =                 UINT64_C(1)<<5, // 20
+        VERTEX_COLOR =                  UINT64_C(1)<<6, // 40
 
         BASE_COLOR_TEXTURE =            UINT64_C(1)<<10,
 

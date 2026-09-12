@@ -181,12 +181,13 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                                 continue;
                         }
 
-                        if(!primitiveTypeFound && vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture)
-                        {
-                                if(!(gltfSceneFileData.v_primitiveType[primitiveIndex].a & VERTEX_TEXTURE_COORD))
-                                        gltfSceneFileData.v_primitiveType[primitiveIndex].a |= UV_MISSING | PRIMITVE_ERROR;
-                                gltfSceneFileData.v_primitiveType[primitiveIndex].a |= BASE_COLOR_TEXTURE;
-                        }
+                        if(vp_sceneMesh[i]->primitives[j].material)
+                                if(!primitiveTypeFound && vp_sceneMesh[i]->primitives[j].material->pbr_metallic_roughness.base_color_texture.texture)
+                                {
+                                        if(!(gltfSceneFileData.v_primitiveType[primitiveIndex].a & VERTEX_TEXTURE_COORD))
+                                                gltfSceneFileData.v_primitiveType[primitiveIndex].a |= UV_MISSING | PRIMITVE_ERROR;
+                                        gltfSceneFileData.v_primitiveType[primitiveIndex].a |= BASE_COLOR_TEXTURE;
+                                }
 
 
 
@@ -206,7 +207,9 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                         if(gltfSceneFileData.v_primitiveType[primitiveIndex].a & VERTEX_TEXTURE_COORD)
                         {
                                 for(u32 o=0; o<uvAttribute.data->count; o++)
+                                {
                                         cgltf_accessor_read_float(uvAttribute.data, o, gltfSceneFileData.v_VBOdata[primitiveIndex]+ o*fn_getVBOstride(gltfSceneFileData.v_primitiveType[i].a) + VBOoffset, 2);
+                                }
                                 VBOoffset += sizeof(vec2);
                         }
 
@@ -223,8 +226,10 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                         if(gltfSceneFileData.v_primitiveType[primitiveIndex].a & VERTEX_COLOR)
                         {
                                 for(u32 o=0; o<colorAttribute.data->count; o++)
-                                        cgltf_accessor_read_float(colorAttribute.data, o, gltfSceneFileData.v_VBOdata[primitiveIndex]+ o*fn_getVBOstride(gltfSceneFileData.v_primitiveType[i].a) + VBOoffset, 3);
-                                VBOoffset += sizeof(vec3);
+                                {
+                                        cgltf_accessor_read_float(colorAttribute.data, o, gltfSceneFileData.v_VBOdata[primitiveIndex]+ o*fn_getVBOstride(gltfSceneFileData.v_primitiveType[i].a) + VBOoffset, 4);
+                                }
+                                VBOoffset += sizeof(vec4);
                         }
 
 
@@ -264,8 +269,12 @@ S_gltfSceneFileData fn_loadGltfSceneFileFormat(const char* filePath, u32 sceneIn
                                 }
                                 else
                                 {
-                                        gltfSceneFileData.v_texturePath[primitiveIndex] = malloc(strlen(dirPath) + strlen(filePathFromUri)+1);
-                                        strcpy(gltfSceneFileData.v_texturePath[primitiveIndex], dirPath);
+                                        u32 offset = 0;
+                                        if(dirPath)
+                                                offset = strlen(dirPath);
+                                        gltfSceneFileData.v_texturePath[primitiveIndex] = malloc(offset + strlen(filePathFromUri)+1);
+                                        if(dirPath)
+                                                strcpy(gltfSceneFileData.v_texturePath[primitiveIndex], dirPath);
                                         strcat(gltfSceneFileData.v_texturePath[primitiveIndex], filePathFromUri);
                                 }
                         }
@@ -368,6 +377,7 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
                 scene.v_verticeCount[i] = gltfSceneFileData.v_verticeCount[i];
                 scene.v_indiceCount[i] = gltfSceneFileData.v_indiceCount[i];
                 scene.v_primitiveType[i].a = gltfSceneFileData.v_primitiveType[i].a;
+                printf("primitive = %x\n", scene.v_primitiveType[i].a);
 
                 glBindVertexArray(scene.v_VAO[i]);
 
@@ -393,14 +403,15 @@ S_openGLscene fn_gltfSceneFileDataToOpenGLscene(S_gltfSceneFileData gltfSceneFil
                 if(gltfSceneFileData.v_primitiveType[i].a & VERTEX_NORMAL) // TODO:
                 {
                         glVertexAttribPointer(NORMAL_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
-                        glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
+                        glEnableVertexAttribArray(NORMAL_VERTEX_BUFFER_LOCATION);
 
                         vertexOffset += sizeof(vec3);
                 }
+
                 if(gltfSceneFileData.v_primitiveType[i].a & VERTEX_COLOR)
                 {
-                        glVertexAttribPointer(COLOR_VERTEX_BUFFER_LOCATION, 3, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
-                        glEnableVertexAttribArray(TEXTURE_COORD_VERTEX_BUFFER_LOCATION);
+                        glVertexAttribPointer(COLOR_VERTEX_BUFFER_LOCATION, 4, GL_FLOAT, GL_FALSE, VBOstride, vertexOffset);
+                        glEnableVertexAttribArray(COLOR_VERTEX_BUFFER_LOCATION);
 
                         vertexOffset += sizeof(vec2);
                 }

@@ -8,6 +8,8 @@
 
 // INFO : shader uniform layout location
 #define PROJECTION_VIEW_UNIFORM_LOCATION 0
+#define MODEL_UNIFORM_LOCATION 1
+#define SUN_LIGHT_UNIFORM_LOCATION 2
 
 // INFO : shader vertex buffer layout location
 #define POSITION_VERTEX_BUFFER_LOCATION         0
