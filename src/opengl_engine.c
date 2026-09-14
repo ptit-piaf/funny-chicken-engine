@@ -122,20 +122,12 @@ E_main fn_openGLEngineLoop()
         GLuint shaderProgram[2];
         GLuint vertexShader, fragmentShader;
 
-        printf(ANSI_GREEN_TEXT("shader/base.vert")"\n");
-        vertexShader = fn_compileOpenglShader("shader/base.vert", GL_VERTEX_SHADER);
-        printf(ANSI_GREEN_TEXT("shader/base.frag\n")"\n");
-        fragmentShader = fn_compileOpenglShader("shader/base.frag", GL_FRAGMENT_SHADER);
+        printf(ANSI_GREEN_TEXT("shader/flat/debug.vert")"\n");
+        vertexShader = fn_compileOpenglShader("shader/flat/debug.vert", GL_VERTEX_SHADER);
+        printf(ANSI_GREEN_TEXT("shader/flat/debug.frag\n")"\n");
+        fragmentShader = fn_compileOpenglShader("shader/flat/debug.frag", GL_FRAGMENT_SHADER);
         printf("notnotnot\n");
         shaderProgram[0] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
-
-
-        printf(ANSI_GREEN_TEXT("shader/base_color_texture.vert\n")"\n");
-        vertexShader = fn_compileOpenglShader("shader/base_color_texture.vert", GL_VERTEX_SHADER);
-        printf(ANSI_GREEN_TEXT("shader/base_color_texture.frag\n")"\n");
-        fragmentShader = fn_compileOpenglShader("shader/base_color_texture.frag", GL_FRAGMENT_SHADER);
-
-        shaderProgram[1] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
 
         glfwSwapInterval(1);
 

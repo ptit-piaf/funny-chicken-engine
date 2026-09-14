@@ -17,7 +17,8 @@ E_error fn_openGLrender(S_openGLscene scene)
                         continue;
 
                 glUseProgram(scene.v_shader[0]); // TODO :
-                glUniformMatrix4fv(PROJECTION_VIEW_UNIFORM_LOCATION, 1, GL_FALSE, *scene.projectionViewMat); // INFO : I have to update it because ever time it get unbind 
+                glUniformMatrix4fv(PROJECTION_VIEW_UNIFORM_LOCATION, 1, GL_FALSE, *scene.projectionViewMat); // INFO : I have to update it because ever time it get unbind
+                glUniform3f(SUN_LIGHT_UNIFORM_LOCATION, -1.0f, 1.0f, -1.0f);
 
                 glBindVertexArray(scene.v_VAO[i]);
 

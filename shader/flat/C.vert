@@ -1,3 +1,4 @@
+#version 460 core
 // INFO : IN
 layout(location = 0) in vec3 pos;
 layout(location = 2) in vec3 normal;
@@ -13,7 +14,10 @@ layout(location = 2) uniform vec3 sunLight;
 
 void main()
 {
+        lightStrenght = dot(normal, sunLight)-inColor.w;
+        if(lightStrenght < 0.0f)
+                lightStrenght = 0.0f;
+
         outColor = inColor;
-        lightStrenght = dot(normal, sunLight);
-        gl_Position = vec4(pos, 1.0f) * projectionViewMat;
+        gl_Position = projectionViewMat * vec4(pos, 1.0f);
 }

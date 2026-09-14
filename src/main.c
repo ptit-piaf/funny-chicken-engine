@@ -27,6 +27,7 @@
         * TODO : Manage main argument
         * TODO : Create some global variable to manage text output
         * TODO : Implement vulkan
+        * TODO : BCT_C.vert BCT_flC.vert BCT_C.frag
 
  * INFO : OPTIONNAL
         * TODO : Implement config file

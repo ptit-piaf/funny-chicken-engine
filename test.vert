@@ -1,15 +1,8 @@
 #version 460 core
 
-layout(location = 0) in vec3 pos;
-layout(location = 1) in vec2 aTextureCoord;
-
-out vec2 textureCoord;
-
-uniform mat4 modelMat;
-layout(location = 0) uniform mat4 projectionViewMat;
+vec4 test[3] = {vec4(-1.0f, -1.0f, 0.0f, 0.0f), vec4(0.0f, 1.0f, 0.0f, 0.0f), vec4(1.0f, -1.0f, 0.0f, 0.0f)};
 
 void main()
 {
-        textureCoord = aTextureCoord;
-        gl_Position = projectionViewMat * vec4(pos, 1.0);
+        gl_Position = test[gl_VertexID % 3];
 }

@@ -1,6 +1,6 @@
 #version 460 core
 // INFO : IN
-layout(location = 0) in float lightStrenght;
+layout(location = 0) in flat float lightStrenght;
 
 // INFO : OUT
 out vec4 color;
