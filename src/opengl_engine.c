@@ -119,15 +119,8 @@ E_main fn_openGLEngineLoop()
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-        GLuint shaderProgram[2];
-        GLuint vertexShader, fragmentShader;
 
-        printf(ANSI_GREEN_TEXT("shader/flat/debug.vert")"\n");
-        vertexShader = fn_compileOpenglShader("shader/flat/debug.vert", GL_VERTEX_SHADER);
-        printf(ANSI_GREEN_TEXT("shader/flat/debug.frag\n")"\n");
-        fragmentShader = fn_compileOpenglShader("shader/flat/debug.frag", GL_FRAGMENT_SHADER);
-        printf("notnotnot\n");
-        shaderProgram[0] = fn_createOpenglShaderProgram((GLuint[2]) {vertexShader, fragmentShader}, 2);
+        scene.v_shaderProgram
 
         glfwSwapInterval(1);
 

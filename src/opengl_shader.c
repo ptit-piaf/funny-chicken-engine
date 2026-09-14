@@ -5,6 +5,15 @@
 
 #include "shader.h"
 
+GLuint* fn_getOpenGLshader(u32* p_shaderProgramCount)
+{
+        GLuint* returnValue;
+
+
+
+        return returnValue;
+}
+
 GLuint fn_compileOpenglShader(const char* shaderPath, GLenum shaderType)
 {
         HOL_buffer buffer = HOL_readFile(shaderPath);
@@ -49,9 +58,6 @@ GLuint fn_createOpenglShaderProgram(GLuint* v_shader, u32 shaderCount)
                 fprintf(stderr, ANSI_RED_TEXT("OpenGL linking error") " : %.512s\n", errorString);
                 shaderProgram = 0;
         }
-
-        for(u32 i=0; i<shaderCount; i++)
-                glDeleteShader(v_shader[i]);
 
         return shaderProgram;
 }

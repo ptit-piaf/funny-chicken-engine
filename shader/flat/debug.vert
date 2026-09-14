@@ -12,6 +12,6 @@ layout(location = 2) uniform vec3 sunLight;
 
 void main()
 {
-        lightStrenght = (dot(normal, sunLight)+1.0f)/2.0f;
+        lightStrenght = dot(normal, sunLight);
         gl_Position = projectionViewMat * vec4(pos, 1.0f);
 }

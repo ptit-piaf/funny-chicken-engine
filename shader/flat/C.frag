@@ -4,7 +4,7 @@ layout(location = 0) in float lightStrenght;
 layout(location = 1) in vec4 inColor;
 
 // INFO : OUT
-out vec4 color;
+layout(location = 0) out vec4 color;
 
 void main()
 {
